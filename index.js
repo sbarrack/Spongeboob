@@ -21,7 +21,7 @@ client.on('message', msg => {
             // res.favicon
             mcping('mc.stephenbarrack.com', 25565, (err, res) => {
                 if (err) {
-                    msg.reply('see pinned for last status.').then(() => {
+                    msg.reply('unable to retrieve status. Refer to last one in pins or check Minecraft.').then(() => {
                         msg.delete();
                     });
                     return;
@@ -54,10 +54,10 @@ client.on('message', msg => {
         case 'h':
         case 'help':
         default:
-            botChannel.send('>>> Commands (use ; in #bot only):\n\
+            botChannel.send('>>> Commands (prefix ; in #bot only):\n\
             help (h) - Show this message\n\
             ping (p) - Measure your current lag to the server in milliseconds (soon:tm:)\n\
-            status (s) - Check if the server is active and who\'s online').then(() => {
+            status (s) - Check the server state and who\'s online').then(() => {
                 msg.delete();
             });
     }
