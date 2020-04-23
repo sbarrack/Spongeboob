@@ -1,62 +1,14 @@
 const fs = require('fs');
 const config = JSON.parse(fs.readFileSync('config.json'));
 
-const rpc = require('discord-rich-presence')(config.id);
-
 const mcping = require('mc-ping-updated');
-const date = new Date();
-let status;
-pingServer();
-setInterval(pingServer, 300e3); // 5 mins
-
-function pingServer() {
-    mcping('mc.stephenbarrack.com', 25565, (err, res) => {
-        if (err) {
-            status = err;
-            return;
-        }
-        status = res;
-        /* Sample response:
-        {
-            "version": {
-                "name": "1.8.7",
-                "protocol": 47
-            },
-            "players": {
-                "max": 100,
-                "online": 5,
-                "sample": [
-                    {
-                        "name": "thinkofdeath",
-                        "id": "4566e69f-c907-48ee-8d71-d7ba5aa00d20"
-                    }
-                ]
-            },	
-            "description": {
-                "text": "Hello world"
-            },
-            "favicon": "data:image/png;base64,<data>"
-        } */
-    }, 3e3);
-
-    rpc.updatePresence({
-        state: 'test2',
-        details: 'test',
-        startTimestamp: date,
-        startTimestamp: date + 1337,
-        largeImageKey: config.asset,
-        // largeImageText: 'test3',
-        smallImageKey: config.asset,
-        // smallImageText: 'test4',
-        instance: true,
-    });
-}
 
 const Discord = require('discord.js');
 const client = new Discord.Client();
 
 client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
+    client.user.setActivity('#bot ;help', { type: 'PLAYING' });
 });
 
 client.on('message', msg => {
@@ -64,6 +16,28 @@ client.on('message', msg => {
     if (!(msg.channel.equals(botChannel) && msg.content.startsWith(';'))) return;
     let cmd = msg.content.slice(1).split(' ');
     switch (cmd[0]) {
+        case 's':
+        case 'status':
+            mcping('mc.stephenbarrack.com', 25565, (err, res) => {
+                if (err) {
+                    botChannel.send(JSON.stringify(error));
+                    return;
+                }
+                botChannel.send('', {
+                    embed: {
+                        // thumbnail: { url: res.favicon },
+                        footer: {
+                            iconUrl: msg.author.displayAvatarURL(),
+                            text: msg.member.displayName,
+                        },
+                        timestamp: new Date().toISOString(),
+                        color: 7879685,
+                        title: 'Current status of **The DK Crew**',
+                        description: `Version ${res.version.name}\nPlayers ${res.players.online} / ${res.players.max}\n\n${res.players.sample ? res.players.sample.map(e => { return e.name }).join('\n') : ''}`,
+                    },
+                });
+            }, 3e3);
+            break;
         case 'p':
         case 'ping':
             msg.reply('coming soon:tm:');
