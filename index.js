@@ -18,34 +18,48 @@ client.on('message', msg => {
     switch (cmd[0]) {
         case 's':
         case 'status':
+            // res.favicon
             mcping('mc.stephenbarrack.com', 25565, (err, res) => {
                 if (err) {
-                    botChannel.send(JSON.stringify(error));
+                    msg.reply('see pinned for last status.').then(() => {
+                        msg.delete();
+                    });
                     return;
                 }
-                botChannel.send('', {
-                    embed: {
-                        // thumbnail: { url: res.favicon },
-                        footer: {
-                            iconUrl: msg.author.displayAvatarURL(),
-                            text: msg.member.displayName,
-                        },
-                        timestamp: new Date().toISOString(),
-                        color: 7879685,
-                        title: 'Current status of **The DK Crew**',
-                        description: `Version ${res.version.name}\nPlayers ${res.players.online} / ${res.players.max}\n\n${res.players.sample ? res.players.sample.map(e => { return e.name }).join('\n') : ''}`,
-                    },
+                botChannel.send('', new Discord.MessageEmbed()
+                    .setTitle('Current status of **The DK Crew**')
+                    .setFooter(msg.member.displayName, msg.author.displayAvatarURL())
+                    .setTimestamp(Date.now())
+                    .setColor(7879685)
+                    .setDescription(`Version ${res.version.name}\nPlayers ${res.players.online} / ${res.players.max}\n\n${res.players.sample ? res.players.sample.map(e => { return e.name }).join('\n') : ''}`)
+                ).then(msg2 => {
+                    msg.delete();
+                    botChannel.messages.fetchPinned().then(pins => {
+                        pins.forEach(pin => {
+                            pin.unpin();
+                        });
+                        msg2.pin().then(() => {
+                            botChannel.lastMessage.delete();
+                        });
+                    });
                 });
             }, 3e3);
             break;
         case 'p':
         case 'ping':
-            msg.reply('coming soon:tm:');
+            msg.reply(`${Date.now() - msg.createdAt}ms.`).then(() => {
+                msg.delete();
+            });
             break;
         case 'h':
         case 'help':
         default:
-            msg.reply('coming soon:tm:');
+            botChannel.send('>>> Commands (use ; in #bot only):\n\
+            help (h) - Show this message\n\
+            ping (p) - Measure your current lag to the server in milliseconds (soon:tm:)\n\
+            status (s) - Check if the server is active and who\'s online').then(() => {
+                msg.delete();
+            });
     }
 });
 
