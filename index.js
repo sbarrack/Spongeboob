@@ -17,13 +17,32 @@ client.on('ready', () => {
 });
 
 client.on('message', msg => {
-    return;
-    const botChannel = client.channels.cache.find(ch => ch.name === 'bot');
-    if (!(msg.channel.equals(botChannel) && msg.content.startsWith(';'))) return;
+    let ping = Date.now();
+    if (!msg.content.startsWith(';') || msg.author.bot) return;
     let cmd = msg.content.slice(1).split(' ');
+    if (!cmd.length) return;
+    const botChannel = client.channels.cache.find(ch => ch.name === 'bot');
     switch (cmd[0]) {
+        case 'bd':
+        case 'bulkdelete':
+            if (msg.author.id === msg.guild.ownerID) {
+                if (!cmd[1]) return;
+                let n = +cmd[1];
+                if (!Number.isInteger(n)) return;
+                if (++n < 2 || n > 100) return;
+                msg.channel.bulkDelete(n, true);
+            }
+            break;
+        case 'p':
+        case 'ping':
+            if (!msg.channel.id === botChannel.id) return;
+            msg.reply(`${ping - msg.createdAt}ms.`).then(() => {
+                msg.delete();
+            });
+            break;
         case 's':
         case 'status':
+            if (!msg.channel.id === botChannel.id) return;
             mcping('mc.stephenbarrack.com', 25565, (err, res) => {
                 if (err) {
                     msg.reply('unable to retrieve status. Refer to last one in pins or check Minecraft.').then(() => {
@@ -50,21 +69,19 @@ client.on('message', msg => {
                 });
             }, 3e3);
             break;
-        case 'p':
-        case 'ping':
-            msg.reply(`${Date.now() - msg.createdAt}ms.`).then(() => {
-                msg.delete();
-            });
-            break;
         case 'h':
         case 'help':
         default:
-            botChannel.send('>>> Commands (prefix ; in #bot only):\n\
-            help (h) - Show this message\n\
-            ping (p) - Measure your current lag to the server in milliseconds (soon:tm:)\n\
-            status (s) - Check the server state and who\'s online').then(() => {
-                msg.delete();
-            });
+            if (!msg.channel.id === botChannel.id) return;
+            if (!cmd[1]) {
+                botChannel.send('>>> Commands (prefix ; in #bot only):\n\
+                help (h) - Show this message\n\
+                ping (p) - Soon:tm:\n\
+                status (s) - Check the server state and who\'s online\n\n\
+                For feature requests, DM @Estuvo#7008.').then(() => {
+                    msg.delete();
+                });
+            }
     }
 });
 
