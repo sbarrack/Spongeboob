@@ -5,8 +5,7 @@ const mcping = require('mc-ping-updated');
 
 const http = require('http');
 http.createServer((req, res) => {
-	res.write('');
-	res.end();
+	res.end('A');
 }).listen(8080);
 
 const Discord = require('discord.js');
