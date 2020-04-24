@@ -3,6 +3,13 @@ const config = JSON.parse(fs.readFileSync('config.json'));
 
 const mcping = require('mc-ping-updated');
 
+const http = require('http');
+
+http.createServer((req, res) => {
+	res.write('A');
+	res.end();
+}).listen(8080);
+
 const Discord = require('discord.js');
 const client = new Discord.Client();
 
