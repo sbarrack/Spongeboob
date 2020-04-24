@@ -4,9 +4,8 @@ const config = JSON.parse(fs.readFileSync('config.json'));
 const mcping = require('mc-ping-updated');
 
 const http = require('http');
-
 http.createServer((req, res) => {
-	res.write('A');
+	res.write('');
 	res.end();
 }).listen(8080);
 
@@ -19,13 +18,13 @@ client.on('ready', () => {
 });
 
 client.on('message', msg => {
+    return;
     const botChannel = client.channels.cache.find(ch => ch.name === 'bot');
     if (!(msg.channel.equals(botChannel) && msg.content.startsWith(';'))) return;
     let cmd = msg.content.slice(1).split(' ');
     switch (cmd[0]) {
         case 's':
         case 'status':
-            // res.favicon
             mcping('mc.stephenbarrack.com', 25565, (err, res) => {
                 if (err) {
                     msg.reply('unable to retrieve status. Refer to last one in pins or check Minecraft.').then(() => {
