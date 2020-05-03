@@ -11,6 +11,8 @@ http.createServer((req, res) => {
 const Discord = require('discord.js');
 const client = new Discord.Client();
 
+const polls = [];
+
 client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
     client.user.setActivity('#bot ;help', { type: 'PLAYING' });
@@ -26,11 +28,48 @@ client.on('message', msg => {
         case 'bd':
         case 'bulkdelete':
             if (msg.author.id === msg.guild.ownerID) {
-                if (!cmd[1]) return;
-                let n = +cmd[1];
-                if (!Number.isInteger(n)) return;
-                if (++n < 2 || n > 100) return;
-                msg.channel.bulkDelete(n, true);
+                if (!cmd[1]) cmd[1] = 2;
+                msg.channel.bulkDelete(cmd[1], true);
+            }
+            break;
+        case 'sp':
+        case 'simplepoll':
+            if (msg.author.id === msg.guild.ownerID) {
+                if (!cmd[1]) {
+                    cmd[1] = 3600000;
+                }
+                if (!cmd[2]) {
+                    cmd[2] = 'Yes or no?';
+                }
+                botChannel.send(cmd.slice(2).join(' ')).then(poll => {
+                    poll.react('🇮').then(() => {
+                        let participants = poll.channel.members.array().length;
+                        let tally = poll.createReactionCollector((re, user) => {
+                            return re.emoji.name === '🇮';
+                        }, { time: +cmd[1], maxEmojis: Math.floor(participants / 2) + 1 });
+
+                        tally.on('end', collected => {
+                            let result = 'The motion fails.';
+                            let count = collected.array()[0].count - 1;
+                            if (count < 1) return;
+                            if (count / participants > 0.5) result = "The I's have it!";
+                            msg.reply(result);
+                        });
+
+                        polls.push(tally);
+                        msg.delete();
+                    });
+                })
+            }
+            break;
+        case 'ep':
+        case 'endpoll':
+            if (msg.author.id === msg.guild.ownerID) {
+                if (!cmd[1]) {
+                    cmd[1] = 1;
+                }
+                polls.slice(+cmd[1] - 1, 1)[0].stop();
+                msg.delete();
             }
             break;
         case 'p':
