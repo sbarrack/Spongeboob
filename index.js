@@ -41,7 +41,7 @@ client.on('message', msg => {
                 if (!cmd[2]) {
                     cmd[2] = 'Yes or no?';
                 }
-                botChannel.send(cmd.slice(2).join(' ')).then(poll => {
+                msg.channel.send(cmd.slice(2).join(' ')).then(poll => {
                     poll.react('🇮').then(() => {
                         let participants = poll.channel.members.array().length;
                         let tally = poll.createReactionCollector((re, user) => {
