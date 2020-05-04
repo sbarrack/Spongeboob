@@ -12,6 +12,7 @@ const Discord = require('discord.js');
 const client = new Discord.Client();
 
 const polls = [];
+const reacts = ['👍', '👎'];
 
 client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
@@ -28,45 +29,56 @@ client.on('message', msg => {
         case 'bd':
         case 'bulkdelete':
             if (msg.author.id === msg.guild.ownerID) {
-                if (!cmd[1]) cmd[1] = 2;
+                if (cmd.length < 2) cmd[1] = 2;
                 msg.channel.bulkDelete(cmd[1], true);
             }
             break;
         case 'sp':
-        case 'simplepoll':
+        case 'startpoll':
             if (msg.author.id === msg.guild.ownerID) {
-                if (!cmd[1]) {
-                    cmd[1] = 3600000;
+                if (cmd.length < 3) return;
+                if (!Number.isInteger(+cmd[1])) {
+                    cmd.splice(1, 0, '24');
                 }
-                if (!cmd[2]) {
-                    cmd[2] = 'Yes or no?';
-                }
-                msg.channel.send(cmd.slice(2).join(' ')).then(poll => {
-                    poll.react('🇮').then(() => {
-                        let participants = poll.channel.members.array().length;
-                        let tally = poll.createReactionCollector((re, user) => {
-                            return re.emoji.name === '🇮';
-                        }, { time: +cmd[1], maxEmojis: Math.floor(participants / 2) + 1 });
+                msg.channel.send(cmd.slice(2).join(' ')).then(msg2 => {
+                    Promise.all([msg2.react(reacts[0]), msg2.react(reacts[1])]).then(() => {
+                        let i;
+                        let yes = 0;
+                        let no = 0;
+                        let total = msg2.channel.members.array().length - 1;
+                        let voters = [];
 
-                        tally.on('end', collected => {
-                            let result = 'The motion fails.';
-                            let count = collected.array()[0].count - 1;
-                            if (count < 1) return;
-                            if (count / participants > 0.5) result = "The I's have it!";
-                            msg.reply(result);
+                        let poll = msg2.createReactionCollector((re, user) => {
+                            return re.emoji.name === reacts[0] || re.emoji.name === reacts[1];
+                        }, { time: +cmd[1] * 3600000, maxUsers: total });
+
+                        poll.on('collect', (re, user) => {
+                            if (re.client.user.id === user.id) return;
+                            let repeat = voters.find(voter => voter.id === user.id);
+                            re.users.remove(user);
+                            if (repeat) return;
+                            voters.push(user);
+                            if (re.emoji.name === reacts[0]) yes++;
+                            else if (re.emoji.name === reacts[1]) no++;
                         });
 
-                        polls.push(tally);
+                        poll.on('end', collected => {
+                            msg.reply('the people have spoken. The motion ' + (yes / (yes + no) > 0.5 ? 'passes.' : 'fails.'));
+                            polls.splice(i, 1);
+                        });
+                        
+                        i = polls.push(poll) - 1;
                         msg.delete();
                     });
-                })
+                });
             }
             break;
-        case 'ep':
-        case 'endpoll':
+        case 'cp':
+        case 'closepoll':
             if (msg.author.id === msg.guild.ownerID) {
+                if (polls.length < 1) return;
                 if (!cmd[1]) {
-                    cmd[1] = 1;
+                    cmd[1] = polls.length - 1;
                 }
                 polls.slice(+cmd[1] - 1, 1)[0].stop();
                 msg.delete();
