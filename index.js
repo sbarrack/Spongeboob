@@ -56,14 +56,16 @@ client.on('message', msg => {
                             if (re.client.user.id === user.id) return;
                             let repeat = voters.find(voter => voter.id === user.id);
                             re.users.remove(user);
-                            if (repeat) return;
+                            if (repeat) {
+                                return;
+                            }
                             voters.push(user);
                             if (re.emoji.name === reacts[0]) yes++;
                             else if (re.emoji.name === reacts[1]) no++;
                         });
 
                         poll.on('end', collected => {
-                            msg.reply('the people have spoken. The motion ' + (yes / (yes + no) > 0.5 ? 'passes.' : 'fails.'));
+                            msg.reply('the people have spoken. The motion ' + (yes > no ? 'passes' : 'fails') + `.\n(${yes} yes, ${no} no, ${total - yes - no} abstain)`);
                             polls.splice(i, 1);
                         });
                         
@@ -96,7 +98,7 @@ client.on('message', msg => {
             if (!msg.channel.id === botChannel.id) return;
             mcping('mc.stephenbarrack.com', 25565, (err, res) => {
                 if (err) {
-                    msg.reply('unable to retrieve status. Refer to last one in pins or check Minecraft.').then(() => {
+                    msg.reply(`unable to retrieve status. Refer to last one in pins or check Minecraft.`).then(() => {
                         msg.delete();
                     });
                     return;
@@ -118,7 +120,7 @@ client.on('message', msg => {
                         });
                     });
                 });
-            }, 3e3);
+            }, 5e3);
             break;
         case 'h':
         case 'help':
@@ -127,7 +129,7 @@ client.on('message', msg => {
             if (!cmd[1]) {
                 botChannel.send('>>> Commands (prefix ; in #bot only):\n\
                 help (h) - Show this message\n\
-                ping (p) - Soon:tm:\n\
+                ping (p) - Get a rough ping from your client to the server (experimental)\n\
                 status (s) - Check the server state and who\'s online\n\n\
                 For feature requests, DM @Estuvo#7008.').then(() => {
                     msg.delete();
