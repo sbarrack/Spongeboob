@@ -94,7 +94,7 @@ client.on('message', msg => {
         case 'p':
         case 'ping':
             if (!msg.channel.id === botChannel.id) return;
-            msg.reply(`${ping - msg.createdAt}ms.`).then(() => {
+            msg.reply(`${ping - msg.createdAt - client.ws.ping}ms.`).then(() => {
                 msg.delete();
             });
             break;
