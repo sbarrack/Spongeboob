@@ -22,6 +22,16 @@ client.on('ready', () => {
     client.user.setActivity('#bot ;help', { type: 'PLAYING' });
 });
 
+client.on('guildMemberAdd', member => {
+    const channel = member.guild.channels.cache.find(ch => ch.name === 'general');
+    if (!channel) return;
+    if (config.welcome.length) {
+        channel.send(config.welcome[0].replace('${member}', member));
+    } else {
+        channel.send(`Welcome to the server, ${member}!`);
+    }
+});
+
 client.on('message', msg => {
     let ping = Date.now();
     if (!msg.content.startsWith(';') || msg.author.bot) return;
@@ -118,7 +128,7 @@ client.on('message', msg => {
                     return;
                 }
                 msg.channel.send('', new Discord.MessageEmbed()
-                    .setTitle('Current status of **The DK Crew**')
+                    .setTitle('Current status of  **The DK Crew**')
                     .setURL('https://mc.stephenbarrack.com')
                     .setFooter(msg.member.displayName, msg.author.displayAvatarURL())
                     .setTimestamp(Date.now())
@@ -180,12 +190,6 @@ client.on('message', msg => {
                 // });
             }
     }
-});
-
-client.on('guildMemberAdd', member => {
-    const channel = member.guild.channels.cache.find(ch => ch.name === 'general');
-    if (!channel) return;
-    channel.send(`Welcome to the server, ${member}`);
 });
 
 client.login(config.token);
