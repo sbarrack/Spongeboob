@@ -25,11 +25,11 @@ client.on('ready', () => {
 client.on('guildMemberAdd', member => {
     const channel = member.guild.channels.cache.find(ch => ch.name === 'general');
     if (!channel) return;
-    if (config.welcome.length) {
-        channel.send(config.welcome[0].replace('${member}', member));
-    } else {
+    // if (config.welcome.length) {
+    //     channel.send(config.welcome[0].replace('${member}', member));
+    // } else {
         channel.send(`Welcome to the server, ${member}!`);
-    }
+    // }
 });
 
 client.on('message', msg => {
