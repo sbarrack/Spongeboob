@@ -13,6 +13,9 @@ const client = new Discord.Client();
 
 const polls = [];
 const reacts = ['👍', '👎'];
+const statusWaitSecs = 20;
+
+var lastStatus;
 
 client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
@@ -62,6 +65,8 @@ client.on('message', msg => {
                             voters.push(user);
                             if (re.emoji.name === reacts[0]) yes++;
                             else if (re.emoji.name === reacts[1]) no++;
+                            // TODO close poll if clear majority reached
+                            // TODO allow vote changers
                         });
 
                         poll.on('end', collected => {
@@ -96,6 +101,15 @@ client.on('message', msg => {
         case 's':
         case 'status':
             if (!msg.channel.id === botChannel.id) return;
+            let cooldown = (ping - lastStatus) / 1e3;
+            if (cooldown < statusWaitSecs) {
+                cooldown = Math.round(statusWaitSecs - cooldown);
+                msg.reply(`please wait ${cooldown} sec${cooldown > 1 ? 's' : ''} before checking again.`).then(() => {
+                    msg.delete();
+                });
+                return;
+            }
+            lastStatus = ping;
             mcping('mc.stephenbarrack.com', 25565, (err, res) => {
                 if (err) {
                     msg.reply(`unable to retrieve status. Refer to last one in pins or check Minecraft.`).then(() => {
@@ -120,7 +134,7 @@ client.on('message', msg => {
                         });
                     });
                 });
-            }, 5e3);
+            }, 3e3);
             break;
         case 'h':
         case 'help':
