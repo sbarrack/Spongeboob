@@ -117,15 +117,16 @@ client.on('message', msg => {
                     });
                     return;
                 }
-                botChannel.send('', new Discord.MessageEmbed()
+                msg.channel.send('', new Discord.MessageEmbed()
                     .setTitle('Current status of **The DK Crew**')
+                    .setURL('https://mc.stephenbarrack.com')
                     .setFooter(msg.member.displayName, msg.author.displayAvatarURL())
                     .setTimestamp(Date.now())
-                    .setColor(7879685)
+                    .setColor(msg.member.displayColor)
                     .setDescription(`Version ${res.version.name}\nPlayers ${res.players.online} / ${res.players.max}\n\n${res.players.sample ? res.players.sample.map(e => { return e.name }).join('\n') : ''}`)
                 ).then(msg2 => {
                     msg.delete();
-                    botChannel.messages.fetchPinned().then(pins => {
+                    msg.channel.messages.fetchPinned().then(pins => {
                         pins.forEach(pin => {
                             pin.unpin();
                         });
@@ -141,13 +142,42 @@ client.on('message', msg => {
         default:
             if (!msg.channel.id === botChannel.id) return;
             if (!cmd[1]) {
-                botChannel.send('>>> Commands (prefix ; in #bot only):\n\
-                help (h) - Show this message\n\
-                ping (p) - Get a rough ping from your client to the server (experimental)\n\
-                status (s) - Check the server state and who\'s online\n\n\
-                For feature requests, DM @Estuvo#7008.').then(() => {
+                msg.channel.send('', new Discord.MessageEmbed()
+                    .setTitle('Spongeboob Help Menu')
+                    .setURL('https://mc.stephenbarrack.com')
+                    .setFooter(msg.member.displayName, msg.author.displayAvatarURL())
+                    .setTimestamp(Date.now())
+                    .setColor(msg.member.displayColor)
+                    .setDescription(`Use prefix  **;**  in  \`#bot\`  only.\n\
+                    For feature requests, DM <@${client.guilds.resolve('702367002085425163').ownerID}>.`)
+                    .addFields(
+                        {
+                            name: '**help (h)**',
+                            value: 'Show this message'
+                        },
+                        {
+                            name: '**ping (p)**',
+                            value: 'Get a rough ping from your client to the server'
+                        },
+                        {
+                            name: '**status (s)**',
+                            value: "Check the server state and who's online"
+                        }
+                    )
+                    // help (h) - Show this message\n\
+                    // ping (p) - Get a rough ping from your client to the server\n\
+                    // status (s) - Check the server state and who's online\n\n\
+                ).then(() => {
                     msg.delete();
                 });
+
+                // msg.channel.send('>>> Commands (prefix ; in #bot only):\n\
+                // help (h) - Show this message\n\
+                // ping (p) - Get a rough ping from your client to the server\n\
+                // status (s) - Check the server state and who\'s online\n\n\
+                // For feature requests, DM @Estuvo#7008.').then(() => {
+                //     msg.delete();
+                // });
             }
     }
 });
