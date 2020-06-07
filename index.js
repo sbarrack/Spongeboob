@@ -25,11 +25,13 @@ client.on('ready', () => {
 client.on('guildMemberAdd', member => {
     const channel = member.guild.channels.cache.find(ch => ch.name === 'general');
     if (!channel) return;
-    // if (config.welcome.length) {
-    //     channel.send(config.welcome[0].replace('${member}', member));
-    // } else {
-        channel.send(`Welcome to the server, ${member}!`);
-    // }
+    if (config.welcome) {
+        if (config.welcome.length) {
+            channel.send(config.welcome[0].replace('${member}', member));
+        }
+        return;
+    }
+    channel.send(`Welcome to the server, ${member}!`);
 });
 
 client.on('message', msg => {
@@ -49,11 +51,15 @@ client.on('message', msg => {
         case 'sp':
         case 'startpoll':
             if (msg.author.id === msg.guild.ownerID) {
-                if (cmd.length < 3) return;
+                if (cmd.length < 3)  {
+                    msg.delete();
+                    return;
+                }
                 if (!Number.isInteger(+cmd[1])) {
                     cmd.splice(1, 0, '24');
                 }
-                msg.channel.send(cmd.slice(2).join(' ')).then(msg2 => {
+                let question = cmd.slice(2).join(' ');
+                msg.channel.send((polls.length + 1) + '. ' + question).then(msg2 => {
                     Promise.all([msg2.react(reacts[0]), msg2.react(reacts[1])]).then(() => {
                         let i;
                         let yes = 0;
@@ -62,25 +68,30 @@ client.on('message', msg => {
                         let voters = [];
 
                         let poll = msg2.createReactionCollector((re, user) => {
-                            return re.emoji.name === reacts[0] || re.emoji.name === reacts[1];
-                        }, { time: +cmd[1] * 3600000, maxUsers: total });
+                            return true;
+                        }, { time: +cmd[1] * 3600000, maxUsers: Math.ceil(total / 2) });
 
                         poll.on('collect', (re, user) => {
                             if (re.client.user.id === user.id) return;
-                            let repeat = voters.find(voter => voter.id === user.id);
+                            let repeat = voters.findIndex((voter, vote) => voter.user.id === user.id);
                             re.users.remove(user);
-                            if (repeat) {
+                            if (!(re.emoji.name === reacts[0] || re.emoji.name === reacts[1])) {
                                 return;
                             }
-                            voters.push(user);
+
+                            if (repeat >= 0) {
+                                if (voters[repeat].react === reacts[0]) yes--;
+                                else if (voters[repeat].react === reacts[1]) no--;
+                            } else {
+                                voters.push({ user: user, react: re.emoji.name });
+                            }
+                            
                             if (re.emoji.name === reacts[0]) yes++;
                             else if (re.emoji.name === reacts[1]) no++;
-                            // TODO close poll if clear majority reached
-                            // TODO allow vote changers
                         });
 
                         poll.on('end', collected => {
-                            msg.reply('the people have spoken. The motion ' + (yes > no ? 'passes' : 'fails') + `.\n(${yes} yes, ${no} no, ${total - yes - no} abstain)`);
+                            msg.reply(`the people have spoken. The motion "${question}" ${yes > no ? 'passes' : 'fails'}.\n(${yes} yes, ${no} no, ${total - yes - no} abstain)`);
                             polls.splice(i, 1);
                         });
                         
@@ -93,11 +104,14 @@ client.on('message', msg => {
         case 'cp':
         case 'closepoll':
             if (msg.author.id === msg.guild.ownerID) {
-                if (polls.length < 1) return;
-                if (!cmd[1]) {
-                    cmd[1] = polls.length - 1;
+                if (polls.length < 1) {
+                    msg.delete();
+                    return;
                 }
-                polls.slice(+cmd[1] - 1, 1)[0].stop();
+                if (!cmd[1]) {
+                    cmd[1] = polls.length;
+                }
+                polls[+cmd[1] - 1].stop();
                 msg.delete();
             }
             break;
@@ -174,20 +188,9 @@ client.on('message', msg => {
                             value: "Check the server state and who's online"
                         }
                     )
-                    // help (h) - Show this message\n\
-                    // ping (p) - Get a rough ping from your client to the server\n\
-                    // status (s) - Check the server state and who's online\n\n\
                 ).then(() => {
                     msg.delete();
                 });
-
-                // msg.channel.send('>>> Commands (prefix ; in #bot only):\n\
-                // help (h) - Show this message\n\
-                // ping (p) - Get a rough ping from your client to the server\n\
-                // status (s) - Check the server state and who\'s online\n\n\
-                // For feature requests, DM @Estuvo#7008.').then(() => {
-                //     msg.delete();
-                // });
             }
     }
 });
