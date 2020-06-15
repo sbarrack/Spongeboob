@@ -185,7 +185,7 @@ client.on('message', msg => {
                 }
                 msg.channel.send('', new Discord.MessageEmbed()
                     .setTitle('Current status of  **The DK Crew**')
-                    .setURL('https://mc.stephenbarrack.com')
+                    .setURL('https://stephenbarrack.com/Spongeboob/')
                     .setFooter(msg.member.displayName, msg.author.displayAvatarURL())
                     .setTimestamp(Date.now())
                     .setColor(msg.member.displayColor)
@@ -210,7 +210,7 @@ client.on('message', msg => {
             if (!cmd[1]) {
                 msg.channel.send('', new Discord.MessageEmbed()
                     .setTitle('Spongeboob Help Menu')
-                    .setURL('https://mc.stephenbarrack.com')
+                    .setURL('https://stephenbarrack.com/Spongeboob/')
                     .setFooter(msg.member.displayName, msg.author.displayAvatarURL())
                     .setTimestamp(Date.now())
                     .setColor(msg.member.displayColor)
