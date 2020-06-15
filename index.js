@@ -16,6 +16,11 @@ const reacts = ['👍', '👎'];
 const statusWaitSecs = 20;
 
 var lastStatus;
+var shops = { list: [] };
+
+if (fs.existsSync('shops.json')) {
+    shops = JSON.parse(fs.readFileSync('shops.json'));
+}
 
 client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
@@ -48,8 +53,8 @@ client.on('message', msg => {
                 msg.channel.bulkDelete(cmd[1], true);
             }
             break;
-        case 'sp':
-        case 'startpoll':
+        case 'cp':
+        case 'createpoll':
             if (msg.author.id === msg.guild.ownerID) {
                 if (cmd.length < 3)  {
                     msg.delete();
@@ -101,8 +106,8 @@ client.on('message', msg => {
                 });
             }
             break;
-        case 'cp':
-        case 'closepoll':
+        case 'ep':
+        case 'endpoll':
             if (msg.author.id === msg.guild.ownerID) {
                 if (polls.length < 1) {
                     msg.delete();
@@ -121,6 +126,43 @@ client.on('message', msg => {
             msg.reply(`${ping - msg.createdAt - client.ws.ping}ms.`).then(() => {
                 msg.delete();
             });
+            break;
+        case 'sp':
+        case 'shop':
+            if (!msg.channel.id === botChannel.id) return;
+            if (shops[msg.author.id]) {
+                // TODO manage shop, write shop file after (add cooldown to how frequently this can be done)
+            } else {
+                // TODO offer to create shop
+            }
+            msg.delete();
+            break;
+        case 'c':
+        case 'compare':
+            if (!msg.channel.id === botChannel.id) return;
+            if (cmd.length > 1) {
+                let target = msg.mentions.firstKey(cmd.length - 1);
+                if (!target.length) {
+                    if (shops[target]) {
+                        if (target === msg.author.id) {
+                            // TODO compare author shop to all
+                        } else if (shops[msg.author.id]) {
+                            // TODO compare target shop to author shop
+                        } else {
+                            // TODO compare target shop to all
+                        }
+                    } else {
+                        msg.reply(`<@${target}> is not a valid user or does not have a shop.`).then(() => {
+                            msg.delete();
+                        });
+                    }
+                } else {
+                    // TODO compare mentioned shops
+                }
+            } else {
+                // TODO compare all shops
+            }
+            msg.delete();
             break;
         case 's':
         case 'status':
