@@ -4,12 +4,35 @@ $footer-padding: 2rem 1.5rem;
 
 @import '../node_modules/bulma/bulma.sass';
 
+@keyframes panoramic {
+    from {
+        background-position: 300%;
+    }
+    to {
+        background-position: 0;
+    }
+}
+
 body {
     min-height: 100vh;
+    background-color: black;
+    background-image: url('../images/panorama.jpg');
+    background-position: center left;
+    background-repeat: repeat-x;
+    background-size: cover;
+    animation-name: panoramic;
+    animation-timing-function: cubic-bezier(0.25, 0, 0.75, 1);
+    animation-iteration-count: infinite;
+    animation-duration: 60s;
+    animation-direction: alternate-reverse;
 }
 
 footer {
     bottom: 0;
     position: absolute;
     min-width: 100vw;
+
+    &.footer {
+        background-color: #0000;
+    }
 }
