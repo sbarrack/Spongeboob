@@ -1,0 +1,24 @@
+{
+  "name": "spongeboob-pages",
+  "version": "1.0.0",
+  "description": "A web page made by Steve for The DK Crew Minecraft server",
+  "main": "sass/style.scss",
+  "repository": "git@github.com:sbarrack/Spongeboob.git",
+  "author": "sbarrack <12619603+sbarrack@users.noreply.github.com>",
+  "license": "SEE LICENSE IN LICENSE.md",
+  "private": true,
+  "dependencies": {
+    "aos": "^2.3.4",
+    "bulma": "^0.7.5",
+    "jquery": "^3.5.1",
+    "node-sass": "^4.13.1"
+  },
+  "scripts": {
+    "css": "yarn run node-sass --omit-source-map-url sass/style.scss css/style.css"
+  },
+  "devDependencies": {
+    "gulp": "^4.0.2",
+    "gulp-sass": "^4.0.2",
+    "gulp-sourcemaps": "^2.6.5"
+  }
+}
