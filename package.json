@@ -1,11 +1,11 @@
 {
-  "name": "Spongeboob",
+  "name": "spongeboob",
   "version": "1.0.0",
   "description": "A bot made by Steve for The DK Crew Minecraft server",
   "main": "index.js",
   "repository": "git@github.com:sbarrack/Spongeboob.git",
   "author": "sbarrack <12619603+sbarrack@users.noreply.github.com>",
-  "license": "UNLICENSED",
+  "license": "SEE LICENSE IN LICENSE.md",
   "private": true,
   "dependencies": {
     "discord.js": "^12.2.0",
