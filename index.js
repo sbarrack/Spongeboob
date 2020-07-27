@@ -32,7 +32,9 @@ client.on("ready", () => {
     }
 
     client.guilds.cache.get('527796496440098816').emojis.cache.each(emote => {
-        fs.appendFileSync(filepath, emote.name + "\r\n");
+        if (!emote.animated) {
+            fs.appendFileSync(filepath, emote.name + "\r\n");
+        }
     });
 });
 
