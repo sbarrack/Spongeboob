@@ -24,7 +24,7 @@ if (fs.existsSync('shops.json')) {
 
 client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
-    client.user.setActivity('#bot ;help', { type: 'PLAYING' });
+    client.user.setActivity(`#bot ${config.starter}help`, { type: 'PLAYING' });
 });
 
 client.on('guildMemberAdd', member => {
