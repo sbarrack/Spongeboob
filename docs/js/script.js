@@ -1,11 +1,6 @@
-(function ($, AOS) {
-    $(document).ready(function () {
-        AOS.init(/* {
-            offset: 200,
-            duration: 600,
-            easing: 'ease-in-sine',
-            delay: 100,
-        } */);
-
+(function (PSV) {
+    var viewer = new PSV.Viewer({
+        container: document.querySelector('#pano'),
+        panorama: 'images/panorama2.jpg',
     });
-})($, AOS);
+})(PhotoSphereViewer);

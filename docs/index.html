@@ -12,29 +12,33 @@
     <meta name="msapplication-TileColor" content="#da532c">
     <meta name="theme-color" content="#ffffff">
 
+    <link href="dist/photo-sphere-viewer.css" rel="stylesheet">
     <link href="css/style.css" rel="stylesheet">
-    <link href="dist/aos.css" rel="stylesheet">
 </head>
 
 <body>
+    <div id="pano"></div>
+    
     <section class="hero is-fullheight">
         <div class="hero-body">
             <div class="container has-text-centered" data-aos="fade-up" data-aos-once="true" data-aos-delay="100"
                 data-aos-duration="700" data-aos-easing="ease-out">
-                <h1 class="title is-1 has-text-grey-lighter">The DK Crew</h1>
-                <h2 class="subtitle is-3 has-text-grey-light">Coming soon&trade;</h1>
+                <h1 class="title is-1 has-text-white outlined">The DK Crew</h1>
+                <h2 class="subtitle is-3 has-text-white outlined">mc.stephenbarrack.com</h1>
             </div>
         </div>
     </section>
 
     <footer class="footer">
         <div class="content has-text-centered">
-            <p class="has-text-grey-light">&copy; 2020 Stephen Barrack</p>
+            <p class="has-text-white outlined">&copy; 2020 Stephen Barrack</p>
         </div>
 
-        <script defer src="dist/jquery.min.js"></script>
-        <script defer src="dist/aos.js"></script>
-        <script defer src="js/script.js"></script>
+        <script src="dist/three.min.js"></script>
+        <script src="dist/uEvent.js"></script>
+        <script src="dist/promise-polyfill.min.js"></script>
+        <script src="dist/photo-sphere-viewer.js"></script>
+        <script src="js/script.js"></script>
     </footer>
 </body>
 </html>

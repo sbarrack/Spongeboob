@@ -8,9 +8,7 @@
   "license": "SEE LICENSE IN LICENSE.md",
   "private": true,
   "dependencies": {
-    "aos": "^2.3.4",
     "bulma": "^0.7.5",
-    "jquery": "^3.5.1",
     "node-sass": "^4.13.1"
   },
   "scripts": {
