@@ -6956,6 +6956,9 @@ label.panel-block {
   background-color: #fafafa;
   padding: 2rem 1.5rem; }
 
+html {
+  overflow-y: auto; }
+
 body {
   min-height: 100vh;
   background: #0a0a0a; }

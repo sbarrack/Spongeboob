@@ -4,6 +4,10 @@ $footer-padding: 2rem 1.5rem;
 
 @import '../node_modules/bulma/bulma.sass';
 
+html {
+    overflow-y: auto;
+}
+
 body {
     min-height: 100vh;
     background: $black;
