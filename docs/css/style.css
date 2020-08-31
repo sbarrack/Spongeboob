@@ -6957,7 +6957,7 @@ label.panel-block {
   padding: 2rem 1.5rem; }
 
 html {
-  overflow-y: auto; }
+  overflow-y: hidden; }
 
 body {
   min-height: 100vh;
