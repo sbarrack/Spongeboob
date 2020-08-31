@@ -41,7 +41,7 @@ client.on('guildMemberAdd', member => {
 
 client.on('message', msg => {
     let ping = Date.now();
-    if (!msg.content.startsWith(';') || msg.author.bot) return;
+    if (!msg.content.startsWith(config.starter) || msg.author.bot) return;
     let cmd = msg.content.slice(1).split(' ');
     if (!cmd.length) return;
     const botChannel = client.channels.cache.find(ch => ch.name === 'bot');
@@ -214,7 +214,7 @@ client.on('message', msg => {
                     .setFooter(msg.member.displayName, msg.author.displayAvatarURL())
                     .setTimestamp(Date.now())
                     .setColor(msg.member.displayColor)
-                    .setDescription(`Use prefix  **;**  in  \`#bot\`  only.\n\
+                    .setDescription(`Use prefix  **${config.starter}**  in  \`#bot\`  only.\n\
                     For feature requests, DM <@${client.guilds.resolve('702367002085425163').ownerID}>.`)
                     .addFields(
                         {
