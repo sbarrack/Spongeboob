@@ -17,7 +17,8 @@ client.on('message', msg => {
     let ping = Date.now();
 
     if (msg.author.bot) return;
-    if (msg.author.id !== config.creator) return;
+    if (!config.admins[msg.guild.id]) return;
+    if (!config.admins[msg.guild.id].includes(msg.author.id)) return;
 
     let cmd = msg.content;
     if (!cmd.startsWith(config.starter)) return;
@@ -31,7 +32,6 @@ client.on('message', msg => {
                 msg.delete();
             }).catch(console.error);
             break;
-
         case 'rc':
         case 'rolecount':
             msg.guild.roles.fetch().then(roles => {
@@ -43,11 +43,30 @@ client.on('message', msg => {
                     }
                     count.push([ name, role.members.array().length ].join(' | '));
                 });
+                fs.writeFileSync('./output.txt', count.join('\n'));
                 
-                msg.reply(`\n${count.join('\n')}`).then(() => {
+                msg.reply(`${ping - msg.createdAt - client.ws.ping}ms`, {
+                    files: [
+                        './output.txt'
+                    ]
+                }).then(() => {
                     msg.delete();
                 }).catch(console.error);
             }).catch(console.error);
+            break;
+        case 'lm':
+        case 'listmembers':
+            msg.delete();
+            if (!cmd[1]) return;
+            let out = [];
+            msg.channel.members.each(member => {
+                // 547952624301768705 under review
+                // 797619863584899072 bots
+                if (member.roles.cache.has(cmd[1])) {
+                    out.push(`${member.displayName} (${member.user.tag}) | Account creation: ${member.user.createdAt.toDateString()} | Joined on: ${member.joinedAt.toDateString()}`);
+                }
+            });
+            fs.writeFileSync('./output.txt', out.join('\n'));
             break;
     }
 });
