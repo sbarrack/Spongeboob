@@ -116,3 +116,4 @@ dist
 config.json
 output
 *.txt
+start.sh
