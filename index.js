@@ -9,6 +9,35 @@ http.createServer((req, res) => {
 const Discord = require('discord.js');
 const client = new Discord.Client();
 
+function isDev(msg) {
+    return msg.author.id === config.developer;
+}
+
+function isSuper(msg) {
+    if (isDev(msg)) return true;
+    return config.superusers.includes(msg.author.id);
+}
+
+function isAdmin(msg) {
+    if (isSuper(msg)) return true;
+    if (!config.adminRoles[msg.guild.id]) return false;
+    let hasAdminRole = false;
+    config.adminRoles[msg.guild.id].forEach(adminRole => {
+        if (msg.member.roles.cache.has(adminRole)) hasAdminRole = true;
+    });
+    return hasAdminRole;
+}
+
+function isMod(msg) {
+    if (isAdmin(msg)) return true;
+    if (!config.modRoles[msg.guild.id]) return false;
+    let hasModRole = false;
+    config.modRoles[msg.guild.id].forEach(modRole => {
+        if (msg.member.roles.cache.has(modRole)) hasModRole = true;
+    });
+    return hasModRole;
+}
+
 client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
 });
@@ -17,9 +46,6 @@ client.on('message', msg => {
     let ping = Date.now();
 
     if (msg.author.bot) return;
-    if (!config.admins[msg.guild.id]) return;
-    if (!config.admins[msg.guild.id].includes(msg.author.id)) return;
-
     let cmd = msg.content;
     if (!cmd.startsWith(config.starter)) return;
     cmd = cmd.slice(config.starter.length).split(' ');
@@ -34,6 +60,10 @@ client.on('message', msg => {
             break;
         case 'rc':
         case 'rolecount':
+            if (!isMod(msg)) {
+                msg.delete();
+                return;
+            }
             msg.guild.roles.fetch().then(roles => {
                 let count = [];
                 roles.cache.each(role => {
@@ -56,17 +86,31 @@ client.on('message', msg => {
             break;
         case 'lm':
         case 'listmembers':
-            msg.delete();
-            if (!cmd[1]) return;
+            if (!isMod(msg)) {
+                msg.delete();
+                return;
+            }
+            if (!cmd[1]) {
+                msg.delete();
+                return;
+            }
             let out = [];
             msg.channel.members.each(member => {
-                // 547952624301768705 under review
-                // 797619863584899072 bots
+                // 547952624301768705 under review (DS)
+                // 797619863584899072 bots (DK)
                 if (member.roles.cache.has(cmd[1])) {
                     out.push(`${member.displayName} (${member.user.tag}) | Account creation: ${member.user.createdAt.toDateString()} | Joined on: ${member.joinedAt.toDateString()}`);
                 }
             });
             fs.writeFileSync('./output.txt', out.join('\n'));
+                
+            msg.reply(`${ping - msg.createdAt - client.ws.ping}ms`, {
+                files: [
+                    './output.txt'
+                ]
+            }).then(() => {
+                msg.delete();
+            }).catch(console.error);
             break;
     }
 });
