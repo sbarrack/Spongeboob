@@ -46,7 +46,7 @@ function isMod(msg) {
 function logUserRoles(member, memberAfter) {
     if (!config.logChannels[member.guild.id]) return;
 
-    let roleList = [`${member.user.tag}\nAffected roles:\n\`\`\``];
+    let roleList = [`@${member.user.tag}\nAffected roles:\n\`\`\``];
     let cache = member.roles.cache;
     if (memberAfter) {
         cache = member.roles.cache.difference(memberAfter.roles.cache);
