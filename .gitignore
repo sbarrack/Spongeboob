@@ -114,5 +114,6 @@ dist
 .history/
 
 config.json
+memory.json
 output
 *.txt

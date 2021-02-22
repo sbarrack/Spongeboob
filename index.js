@@ -1,5 +1,6 @@
 const fs = require('fs');
 const config = JSON.parse(fs.readFileSync('config.json'));
+const memory = JSON.parse(fs.readFileSync('memory.json'));
 
 const http = require('http');
 http.createServer((req, res) => {
@@ -8,6 +9,11 @@ http.createServer((req, res) => {
 
 const Discord = require('discord.js');
 const client = new Discord.Client();
+
+const msMins = 60 * 1000;
+const saveMemoryInterval = config.saveMemoryInterval * msMins;
+
+let hasMemoryChanged = false;
 
 function isDev(msg) {
     return msg.author.id === config.developer;
@@ -43,7 +49,11 @@ function isMod(msg) {
     return hasModRole;
 }
 
-function logUserRoles(member, memberAfter) {
+function objHasProp(obj, prop) {
+    return obj[prop] ? obj[prop].size >= 1 : false;
+}
+
+function updateRole(member, memberAfter) {
     if (!config.logChannels[member.guild.id]) return;
 
     let roleList = [`<@${member.id}>\nAffected roles:\n\`\`\``];
@@ -56,12 +66,20 @@ function logUserRoles(member, memberAfter) {
     cache.each(role => {
         let name = role.name;
         if (name !== '@everyone') {
-            roleList.push(`${role.name} | ${role.hexColor} | User count: ${role.members.array().length}`);
+            roleList.push(`${name} | ${role.hexColor} | User count: ${role.members.array().length}`);
         }
     });
+
     roleList = roleList.join('\n');
     roleList += '```';
     member.guild.channels.cache.get(config.logChannels[member.guild.id]).send(roleList).then(console.log).catch(console.error);
+}
+
+function saveMemories() {
+    if (hasMemoryChanged) {
+        fs.writeFileSync('./memory.json', JSON.stringify(memory));
+        hasMemoryChanged = false;
+    }
 }
 
 client.on('ready', () => {
@@ -69,11 +87,11 @@ client.on('ready', () => {
 });
 
 client.on('guildMemberRemove', member => {
-    logUserRoles(member);
+    updateRole(member);
 });
 
 client.on('guildMemberUpdate', (oldMember, newMember) => {
-    logUserRoles(oldMember, newMember);
+    updateRole(oldMember, newMember);
 });
 
 client.on('message', msg => {
@@ -155,3 +173,4 @@ client.on('message', msg => {
 });
 
 client.login(config.token);
+setInterval(saveMemories, saveMemoryInterval);
