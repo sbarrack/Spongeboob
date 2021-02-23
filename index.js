@@ -84,6 +84,25 @@ function saveMemories() {
 
 client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
+
+    // client.channels.fetch('813818780823978055').then(copyto => {
+    //     client.channels.fetch('676848184169070615').then(channel => {
+    //         channel.messages.fetch({ limit: 2 }).then(messages => {
+    //             messages.sort((a, b) => a.createdTimestamp - b.createdTimestamp).each(msg => {
+    //                 let files = [];
+    //                 msg.attachments.each(a => {
+    //                     files.push(a.url);
+    //                 });
+    //                 if (files.length) {
+    //                     files = '\n' + files.join('\n');
+    //                 } else {
+    //                     files = '';
+    //                 }
+    //                 copyto.send(`<@${msg.author.id}> at ${msg.createdAt.toString()}\n${msg.content}${files}`);
+    //             });
+    //         }).catch(console.error);
+    //     }).catch(console.error);
+    // }).catch(console.error);
 });
 
 client.on('guildMemberRemove', member => {
