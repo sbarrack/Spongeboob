@@ -82,27 +82,20 @@ function saveMemories() {
     }
 }
 
+function dateToGoogle(date) {
+    return `${[
+        date.getUTCMonth() + 1,
+        date.getUTCDate(),
+        date.getUTCFullYear()
+    ].join('/')} ${[
+        date.getUTCHours(),
+        date.getUTCMinutes(),
+        date.getUTCSeconds()
+    ].join(':')}`;
+}
+
 client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
-
-    // client.channels.fetch('813818780823978055').then(copyto => {
-    //     client.channels.fetch('676848184169070615').then(channel => {
-    //         channel.messages.fetch({ limit: 2 }).then(messages => {
-    //             messages.sort((a, b) => a.createdTimestamp - b.createdTimestamp).each(msg => {
-    //                 let files = [];
-    //                 msg.attachments.each(a => {
-    //                     files.push(a.url);
-    //                 });
-    //                 if (files.length) {
-    //                     files = '\n' + files.join('\n');
-    //                 } else {
-    //                     files = '';
-    //                 }
-    //                 copyto.send(`<@${msg.author.id}> at ${msg.createdAt.toString()}\n${msg.content}${files}`);
-    //             });
-    //         }).catch(console.error);
-    //     }).catch(console.error);
-    // }).catch(console.error);
 });
 
 client.on('guildMemberRemove', member => {
@@ -148,7 +141,7 @@ client.on('message', msg => {
                 });
                 fs.writeFileSync('./output.txt', count.join('\n'));
                 
-                msg.reply(`${ping - msg.createdAt - client.ws.ping}ms`, {
+                msg.reply(`Completed ${cmd[0]} in ${Date.now() - ping}ms`, {
                     files: [
                         './output.txt'
                     ]
@@ -179,12 +172,53 @@ client.on('message', msg => {
             });
             fs.writeFileSync('./output.txt', out.join('\n'));
                 
-            msg.reply(`${ping - msg.createdAt - client.ws.ping}ms`, {
+            msg.reply(`Completed ${cmd[0]} in ${Date.now() - ping}ms`, {
                 files: [
                     './output.txt'
                 ]
             }).then(() => {
                 msg.delete();
+            }).catch(console.error);
+
+            break;
+        case 'u':
+        case 'users':
+            if (!isMod(msg)) {
+                msg.delete();
+                return;
+            }
+
+            msg.guild.members.fetch().then(members => {
+                fs.writeFileSync('./output.txt', 'id\ttag\tnick\trank\tcreated\tjoined\tlastMessage\tlastBoost\tavatar');
+
+                members.filter(member => !member.deleted && !member.user.bot).each(member => {
+                    let rank = member.roles.cache.filter(role => 
+                        config.rankRoles[msg.guild.id].includes(role.id) ||
+                        config.modRoles[msg.guild.id].includes(role.id) ||
+                        config.adminRoles[msg.guild.id].includes(role.id)
+                    ).sort(role => role.position).first();
+
+                    fs.appendFileSync('./output.txt',  '\n' + [
+                        member.id,
+                        member.user.tag,
+                        member.displayName,
+                        rank ? rank.name : '',
+                        dateToGoogle(member.user.createdAt),
+                        dateToGoogle(member.joinedAt),
+                        member.lastMessage ? dateToGoogle(member.lastMessage.createdAt) : '',
+                        member.premiumSince ? dateToGoogle(member.premiumSince) : '',
+                        member.user.displayAvatarURL(),
+                    ].join('\t'));
+                });
+                // TODO get detailed message activity
+
+                msg.reply(`Completed ${cmd[0]} in ${Date.now() - ping}ms`, {
+                    files: [
+                        './output.txt'
+                    ]
+                }).then(() => {
+                    msg.delete();
+                }).catch(console.error);
             }).catch(console.error);
 
             break;
