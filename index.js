@@ -1,19 +1,22 @@
 const fs = require('fs');
 const config = JSON.parse(fs.readFileSync('config.json'));
-const memory = JSON.parse(fs.readFileSync('memory.json'));
 
 const http = require('http');
 http.createServer((req, res) => {
 	res.end('A');
 }).listen(8080);
 
+const winston = require('winston');
+const logger = winston.createLogger({
+    transports: [
+        new winston.transports.Console(),
+        new winston.transports.File({ filename: 'log.txt' }),
+    ],
+    format: winston.format.printf(log => `[${new Date().toLocaleString()}] [${log.level.toUpperCase()}]: ${log.message}`),
+});
+
 const Discord = require('discord.js');
 const client = new Discord.Client();
-
-const msMins = 60 * 1000;
-const saveMemoryInterval = config.saveMemoryInterval * msMins;
-
-let hasMemoryChanged = false;
 
 function isDev(msg) {
     return msg.author.id === config.developer;
@@ -49,10 +52,6 @@ function isMod(msg) {
     return hasModRole;
 }
 
-function objHasProp(obj, prop) {
-    return obj[prop] ? obj[prop].size >= 1 : false;
-}
-
 function updateRole(member, memberAfter) {
     if (!config.logChannels[member.guild.id]) return;
 
@@ -72,13 +71,17 @@ function updateRole(member, memberAfter) {
 
     roleList = roleList.join('\n');
     roleList += '```';
-    member.guild.channels.cache.get(config.logChannels[member.guild.id]).send(roleList).then(console.log).catch(console.error);
+    member.guild.channels.cache.get(config.logChannels[member.guild.id]).send(roleList).catch(e => logger.log('error', e));
 }
 
-function saveMemories() {
-    if (hasMemoryChanged) {
-        fs.writeFileSync('./memory.json', JSON.stringify(memory));
-        hasMemoryChanged = false;
+function failFast(msg, desc, delay = 15000) {
+    if (desc) {
+        msg.reply(desc).then(() => {
+            msg.delete();
+            setTimeout(() => msg.delete(), delay);
+        }).catch(e => logger.log('error', e));
+    } else {
+        msg.delete();
     }
 }
 
@@ -94,8 +97,23 @@ function dateToGoogle(date) {
     ].join(':')}`;
 }
 
+process.on('uncaughtException', e => logger.log('error', e));
+process.on('unhandledRejection', e => logger.log('error', e));
+
 client.on('ready', () => {
-    console.log(`Logged in as ${client.user.tag}!`);
+    logger.log('info', `Logged in as ${client.user.tag}!`);
+});
+
+client.on('debug', m => {
+    logger.log('debug', m);
+});
+
+client.on('warn', m => {
+    logger.log('warn', m);
+});
+
+client.on('error', e => {
+    logger.log('error', e);
 });
 
 client.on('guildMemberRemove', member => {
@@ -116,17 +134,72 @@ client.on('message', msg => {
     if (cmd.length < 1) return;
 
     switch (cmd[0]) {
+        case 'aa':
+        case 'activityaudit':
+            if (!isAdmin(msg)) {
+                logger.log('info', `${msg.author.tag} (${msg.author.id}) attemted to execute ${cmd} without permission`);
+                failFast(msg, 'you lack sufficient privileges');
+                return;
+            }
+
+            // msg.guild.channels.cache.each(channel => {
+
+            // });
+
+            break;
+        case 'h':
+        case 'help':
+            msg.channel.send(`__**Command Help**__
+\`${config.starter}help|h [stay]\` - Print this message. "stay" will prevent it from auto-deleting
+\`${config.starter}ping|p\` - Get a rough ping to the bot`
+                + (isMod(msg) ? `\n\n**Mod only**
+\`${config.starter}listmembers|lm @role1 [@role2 @role3...]\` - List members in one or more roles
+\`${config.starter}rolecount|rc\` - List a count of members in each role
+\`${config.starter}users|u\` - Create a TSV file of all users on the server to import into Google Sheets` : '')
+                + (isAdmin(msg) ? `\n\n**Admin only**
+\`${config.starter}activityaudit|aa\` - Coming soon:tm:!` : '')
+            ).then(m => {
+                msg.delete();
+                if (cmd[1] !== 'stay') setTimeout(() => m.delete(), 65000);
+            }).catch(e => logger.log('error', e));
+
+            break;
+        case 'lm':
+        case 'listmembers':
+            if (!isMod(msg)) {
+                logger.log('info', `${msg.author.tag} (${msg.author.id}) attemted to execute ${cmd} without permission`);
+                failFast(msg, 'you lack sufficient privileges');
+                return;
+            }
+            if (!msg.mentions.roles.array().length) {
+                failFast(msg, `proper usage: \`${config.starter}${cmd[0]} @role1 [@role2 @role3...]\``, 25000);
+                return;
+            }
+
+            let out = [];
+            msg.mentions.roles.each(role => {
+                out.push(`Members for @${role.name}:`);
+                role.members.each(member => {
+                    out.push(`${member.displayName} (${member.user.tag}) | Account creation: ${member.user.createdAt.toDateString()} | Joined on: ${member.joinedAt.toDateString()}`);
+                });
+            });
+            fs.writeFileSync('./output.txt', out.join('\n'));
+                
+            msg.reply(`completed ${cmd[0]} in ${Date.now() - ping}ms`, {
+                files: [ './output.txt' ]
+            }).then(() => msg.delete()).catch(e => logger.log('error', e));
+
+            break;
         case 'p':
         case 'ping':
-            msg.reply(`${ping - msg.createdAt - client.ws.ping}ms.`).then(() => {
-                msg.delete();
-            }).catch(console.error);
+            failFast(msg, `${ping - msg.createdAt - client.ws.ping}ms`);
 
             break;
         case 'rc':
         case 'rolecount':
             if (!isMod(msg)) {
-                msg.delete();
+                logger.log('info', `${msg.author.tag} (${msg.author.id}) attemted to execute ${cmd} without permission`);
+                failFast(msg, 'you lack sufficient privileges');
                 return;
             }
 
@@ -141,50 +214,17 @@ client.on('message', msg => {
                 });
                 fs.writeFileSync('./output.txt', count.join('\n'));
                 
-                msg.reply(`Completed ${cmd[0]} in ${Date.now() - ping}ms`, {
-                    files: [
-                        './output.txt'
-                    ]
-                }).then(() => {
-                    msg.delete();
-                }).catch(console.error);
-            }).catch(console.error);
-
-            break;
-        case 'lm':
-        case 'listmembers':
-            if (!isMod(msg)) {
-                msg.delete();
-                return;
-            }
-            if (!cmd[1]) {
-                msg.delete();
-                return;
-            }
-
-            let out = [];
-            msg.channel.members.each(member => {
-                // 547952624301768705 under review (DS)
-                // 797619863584899072 bots (DK)
-                if (member.roles.cache.has(cmd[1])) {
-                    out.push(`${member.displayName} (${member.user.tag}) | Account creation: ${member.user.createdAt.toDateString()} | Joined on: ${member.joinedAt.toDateString()}`);
-                }
-            });
-            fs.writeFileSync('./output.txt', out.join('\n'));
-                
-            msg.reply(`Completed ${cmd[0]} in ${Date.now() - ping}ms`, {
-                files: [
-                    './output.txt'
-                ]
-            }).then(() => {
-                msg.delete();
-            }).catch(console.error);
+                msg.reply(`completed ${cmd[0]} in ${Date.now() - ping}ms`, {
+                    files: [ './output.txt' ]
+                }).then(() => msg.delete()).catch(e => logger.log('error', e));
+            }).catch(e => logger.log('error', e));
 
             break;
         case 'u':
         case 'users':
             if (!isMod(msg)) {
-                msg.delete();
+                logger.log('info', `${msg.author.tag} (${msg.author.id}) attemted to execute ${cmd} without permission`);
+                failFast(msg, 'you lack sufficient privileges');
                 return;
             }
 
@@ -210,20 +250,14 @@ client.on('message', msg => {
                         member.user.displayAvatarURL(),
                     ].join('\t'));
                 });
-                // TODO get detailed message activity
 
-                msg.reply(`Completed ${cmd[0]} in ${Date.now() - ping}ms`, {
-                    files: [
-                        './output.txt'
-                    ]
-                }).then(() => {
-                    msg.delete();
-                }).catch(console.error);
-            }).catch(console.error);
+                msg.reply(`completed ${cmd[0]} in ${Date.now() - ping}ms`, {
+                    files: [ './output.txt' ]
+                }).this(() => msg.delete()).catch(e => logger.log('error', e));
+            }).catch(e => logger.log('error', e));
 
             break;
     }
 });
 
 client.login(config.token);
-setInterval(saveMemories, saveMemoryInterval);
