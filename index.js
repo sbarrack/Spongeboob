@@ -102,7 +102,28 @@ process.on('unhandledRejection', e => logger.log('error', e));
 
 client.on('ready', () => {
     logger.log('info', `Logged in as ${client.user.tag}!`);
+
+    // fs.writeFileSync('./output.html', '<html><body><div>This ');
+    // messageRecursive('793404655056977940', '793407640432017408');
 });
+
+function messageRecursive(chan, last) {
+    client.channels.fetch(chan).then(channel => {
+        channel.messages.fetch({ limit: 100, after: last }).then(messages => {
+            let ms = messages.sort((a, b) => a.createdTimestamp - b.createdTimestamp);
+            ms.filter(msg => !msg.author.bot).each(msg => {
+                if (msg.cleanContent) {
+                    let str = '';
+                    if (msg.member) str += '<span style="color: ' + msg.member.displayHexColor + ';">';
+                    str += msg.cleanContent.replace(/\<:(.{3,32}):[0-9]{0,20}\>/g, '$1');
+                    fs.appendFileSync('./output.html', str + ' ' + (msg.member ? '</span>' : ''));
+                }
+            });
+            if (ms.last()) console.log(ms.last().createdAt.toUTCString());
+            messageRecursive(chan, ms.last().id);
+        }).catch(console.error);
+    }).catch(console.error);
+}
 
 client.on('debug', m => {
     logger.log('debug', m);
@@ -125,6 +146,7 @@ client.on('guildMemberUpdate', (oldMember, newMember) => {
 });
 
 client.on('message', msg => {
+    // return; // While recording the one-word story
     let ping = Date.now();
 
     if (msg.author.bot) return;
