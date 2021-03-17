@@ -1,6 +1,10 @@
 const fs = require('fs');
 const config = JSON.parse(fs.readFileSync('config.json'));
 
+if (!fs.existsSync('output')) {
+    fs.mkdirSync('output');
+}
+
 const http = require('http');
 http.createServer((req, res) => {
 	res.end('A');
@@ -10,7 +14,7 @@ const winston = require('winston');
 const logger = winston.createLogger({
     transports: [
         new winston.transports.Console(),
-        new winston.transports.File({ filename: 'log.txt' }),
+        new winston.transports.File({ filename: 'output/log.txt' }),
     ],
     format: winston.format.printf(log => `[${new Date().toLocaleString()}] [${log.level.toUpperCase()}]: ${log.message}`),
 });
@@ -102,28 +106,7 @@ process.on('unhandledRejection', e => logger.log('error', e));
 
 client.on('ready', () => {
     logger.log('info', `Logged in as ${client.user.tag}!`);
-
-    // fs.writeFileSync('./output.html', '<html><body><div>This ');
-    // messageRecursive('793404655056977940', '793407640432017408');
 });
-
-function messageRecursive(chan, last) {
-    client.channels.fetch(chan).then(channel => {
-        channel.messages.fetch({ limit: 100, after: last }).then(messages => {
-            let ms = messages.sort((a, b) => a.createdTimestamp - b.createdTimestamp);
-            ms.filter(msg => !msg.author.bot).each(msg => {
-                if (msg.cleanContent) {
-                    let str = '';
-                    if (msg.member) str += '<span style="color: ' + msg.member.displayHexColor + ';">';
-                    str += msg.cleanContent.replace(/\<:(.{3,32}):[0-9]{0,20}\>/g, '$1');
-                    fs.appendFileSync('./output.html', str + ' ' + (msg.member ? '</span>' : ''));
-                }
-            });
-            if (ms.last()) console.log(ms.last().createdAt.toUTCString());
-            messageRecursive(chan, ms.last().id);
-        }).catch(console.error);
-    }).catch(console.error);
-}
 
 client.on('debug', m => {
     logger.log('debug', m);
@@ -146,7 +129,6 @@ client.on('guildMemberUpdate', (oldMember, newMember) => {
 });
 
 client.on('message', msg => {
-    // return; // While recording the one-word story
     let ping = Date.now();
 
     if (msg.author.bot) return;
@@ -156,17 +138,9 @@ client.on('message', msg => {
     if (cmd.length < 1) return;
 
     switch (cmd[0]) {
-        case 'aa':
-        case 'activityaudit':
-            if (!isAdmin(msg)) {
-                logger.log('info', `${msg.author.tag} (${msg.author.id}) attemted to execute ${cmd} without permission`);
-                failFast(msg, 'you lack sufficient privileges');
-                return;
-            }
-
-            // msg.guild.channels.cache.each(channel => {
-
-            // });
+        case 'p':
+        case 'ping':
+            failFast(msg, `${ping - msg.createdAt - client.ws.ping}ms`);
 
             break;
         case 'h':
@@ -179,7 +153,7 @@ client.on('message', msg => {
 \`${config.starter}rolecount|rc\` - List a count of members in each role
 \`${config.starter}users|u\` - Create a TSV file of all users on the server to import into Google Sheets` : '')
                 + (isAdmin(msg) ? `\n\n**Admin only**
-\`${config.starter}activityaudit|aa\` - Coming soon:tm:!` : '')
+Coming soon:tm:!` : '')
             ).then(m => {
                 msg.delete();
                 if (cmd[1] !== 'stay') setTimeout(() => m.delete(), 65000);
@@ -205,16 +179,11 @@ client.on('message', msg => {
                     out.push(`${member.displayName} (${member.user.tag}) | Account creation: ${member.user.createdAt.toDateString()} | Joined on: ${member.joinedAt.toDateString()}`);
                 });
             });
-            fs.writeFileSync('./output.txt', out.join('\n'));
+            fs.writeFileSync('./output/listmembers.txt', out.join('\n'));
                 
             msg.reply(`completed ${cmd[0]} in ${Date.now() - ping}ms`, {
-                files: [ './output.txt' ]
+                files: [ './output/listmembers.txt' ]
             }).then(() => msg.delete()).catch(e => logger.log('error', e));
-
-            break;
-        case 'p':
-        case 'ping':
-            failFast(msg, `${ping - msg.createdAt - client.ws.ping}ms`);
 
             break;
         case 'rc':
@@ -234,10 +203,10 @@ client.on('message', msg => {
                     }
                     count.push([ name, role.members.array().length ].join(' | '));
                 });
-                fs.writeFileSync('./output.txt', count.join('\n'));
+                fs.writeFileSync('./output/rolecount.txt', count.join('\n'));
                 
                 msg.reply(`completed ${cmd[0]} in ${Date.now() - ping}ms`, {
-                    files: [ './output.txt' ]
+                    files: [ './output/rolecount.txt' ]
                 }).then(() => msg.delete()).catch(e => logger.log('error', e));
             }).catch(e => logger.log('error', e));
 
@@ -251,7 +220,7 @@ client.on('message', msg => {
             }
 
             msg.guild.members.fetch().then(members => {
-                fs.writeFileSync('./output.txt', 'id\ttag\tnick\trank\tcreated\tjoined\tlastMessage\tlastBoost\tavatar');
+                fs.writeFileSync('./output/users.txt', 'id\ttag\tnick\trank\tcreated\tjoined\tlastMessage\tlastBoost\tavatar');
 
                 members.filter(member => !member.deleted && !member.user.bot).each(member => {
                     let rank = member.roles.cache.filter(role => 
@@ -260,7 +229,7 @@ client.on('message', msg => {
                         config.adminRoles[msg.guild.id].includes(role.id)
                     ).sort(role => role.position).first();
 
-                    fs.appendFileSync('./output.txt',  '\n' + [
+                    fs.appendFileSync('./output/users.txt',  '\n' + [
                         member.id,
                         member.user.tag,
                         member.displayName,
@@ -274,7 +243,7 @@ client.on('message', msg => {
                 });
 
                 msg.reply(`completed ${cmd[0]} in ${Date.now() - ping}ms`, {
-                    files: [ './output.txt' ]
+                    files: [ './output/users.txt' ]
                 }).this(() => msg.delete()).catch(e => logger.log('error', e));
             }).catch(e => logger.log('error', e));
 
