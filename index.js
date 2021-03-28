@@ -5,6 +5,7 @@ if (!fs.existsSync('output')) {
     fs.mkdirSync('output');
 }
 
+const https = require('https');
 const http = require('http');
 http.createServer((req, res) => {
 	res.end('A');
@@ -106,6 +107,14 @@ process.on('unhandledRejection', e => logger.log('error', e));
 
 client.on('ready', () => {
     logger.log('info', `Logged in as ${client.user.tag}!`);
+
+    client.guilds.fetch('527796496440098816').then(guild => {
+        guild.emojis.cache.each(emoji => {
+            https.get(emoji.url, res => {
+                res.pipe(fs.createWriteStream(`emojis/${emoji.name}.${emoji.animated ? 'gif' : 'png'}`));
+            });
+        });
+    }).catch(console.error);
 });
 
 client.on('debug', m => {
