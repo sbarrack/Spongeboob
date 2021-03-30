@@ -107,9 +107,9 @@ process.on('unhandledRejection', e => logger.log('error', e));
 client.on('ready', () => {
     logger.log('info', `Logged in as ${client.user.tag}!`);
 
-    return;
-    client.channels.fetch('826180451374596129'/* channel id to send msgs to */).then(to => {
-        client.channels.fetch('649387666827247648'/* channel id to get msgs from */).then(from => {
+    // return;
+    client.channels.fetch('826180452112269385'/* channel id to send msgs to */).then(to => {
+        client.channels.fetch('541930164460978178'/* channel id to get msgs from */).then(from => {
 
             function eachMsg(msg) {
                 return to.send(msg.content, msg.embeds.concat([...msg.attachments.values()]).concat(
@@ -130,14 +130,15 @@ client.on('ready', () => {
                         });
                     } else {
                         logger.log('info', `Finished copying messages from ${from.name} to ${to.name}!`);
+                        fs.appendFileSync('./output/missedMessages.json', ']}');
                     }
                 }).catch(console.error);
             }
 
             fs.writeFileSync('./output/missedMessages.json', '{"ids":[');
-            from.messages.fetch('651999281489903627' /* first message id */, false).then(msg => {
-                eachMsg(msg).then(() => messageRecursive(msg.id));
-            })
+            from.messages.fetch('555757224647983107' /* first message id */, false).then(msg => {
+                eachMsg(msg).then(msg2 => messageRecursive(msg.id));
+            }).catch(console.error);
             
         }).catch(console.error);
     }).catch(console.error);
@@ -164,7 +165,7 @@ client.on('guildMemberUpdate', (oldMember, newMember) => {
 });
 
 client.on('message', msg => {
-    // return; // TODO remove after ripping channels
+    return; // TODO remove after ripping channels
     let ping = Date.now();
 
     if (msg.author.bot) return;
