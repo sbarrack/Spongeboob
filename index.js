@@ -107,6 +107,17 @@ process.on('unhandledRejection', e => logger.log('error', e));
 
 client.on('ready', () => {
     logger.log('info', `Logged in as ${client.user.tag}!`);
+
+    // TODO copy all messages from member channels on DS to Electric Spongeaboob
+    let channels = {};
+    client.guilds.cache.get('527796496440098816').channels.cache.sort((c1, c2) => {
+        return c1.rawPosition - c2.rawPosition;
+    }).filter(channel => {
+        return channel.isText();
+    }).each(channel => {
+        channels[channel.id] = channel.name;
+    });
+    fs.writeFileSync('./output/channels.json', JSON.stringify(channels));
 });
 
 client.on('debug', m => {
