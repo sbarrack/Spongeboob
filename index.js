@@ -107,14 +107,6 @@ process.on('unhandledRejection', e => logger.log('error', e));
 
 client.on('ready', () => {
     logger.log('info', `Logged in as ${client.user.tag}!`);
-
-    client.guilds.fetch('527796496440098816').then(guild => {
-        guild.emojis.cache.each(emoji => {
-            https.get(emoji.url, res => {
-                res.pipe(fs.createWriteStream(`emojis/${emoji.name}.${emoji.animated ? 'gif' : 'png'}`));
-            });
-        });
-    }).catch(console.error);
 });
 
 client.on('debug', m => {
@@ -254,6 +246,37 @@ Coming soon:tm:!` : '')
                 msg.reply(`completed ${cmd[0]} in ${Date.now() - ping}ms`, {
                     files: [ './output/users.txt' ]
                 }).this(() => msg.delete()).catch(e => logger.log('error', e));
+            }).catch(e => logger.log('error', e));
+
+            break;
+        case 'bd':
+        case 'bulkdelete':
+            if (!isSuper(msg)) {
+                logger.log('info', `${msg.author.tag} (${msg.author.id}) attemted to execute ${cmd} without permission`);
+                failFast(msg, 'you lack sufficient privileges');
+                return;
+            }
+            if (cmd.length < 2) {
+                failFast(msg, `proper usage: \`${config.starter}${cmd[0]} 2-100\``, 25000);
+                return;
+            }
+            let count = parseInt(cmd[1], 10);
+            if (!count) {
+                failFast(msg, `"${cmd[1]}" is not an integer`);
+                return;
+            }
+            if (count < 2 || count > 100) {
+                failFast(msg, `${cmd[1]} is not between 2 and 100`);
+                return;
+            }
+
+            msg.channel.bulkDelete(count).then(messages => {
+                if (config.deletedMessageChannels[msg.guild.id]) {
+                    fs.writeFileSync('./output/bulkdeleted.json', JSON.stringify([...messages.values()]));
+                    msg.guild.channels.cache.get(config.deletedMessageChannels[msg.guild.id]).send(`Completed ${cmd[0]} ${cmd[1]} in ${Date.now() - ping}ms`, {
+                        files: [ './output/bulkdeleted.json' ]
+                    }).catch(e => logger.log('error', e));
+                }
             }).catch(e => logger.log('error', e));
 
             break;
