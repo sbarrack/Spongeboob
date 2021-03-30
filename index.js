@@ -5,7 +5,6 @@ if (!fs.existsSync('output')) {
     fs.mkdirSync('output');
 }
 
-const https = require('https');
 const http = require('http');
 http.createServer((req, res) => {
 	res.end('A');
@@ -108,16 +107,40 @@ process.on('unhandledRejection', e => logger.log('error', e));
 client.on('ready', () => {
     logger.log('info', `Logged in as ${client.user.tag}!`);
 
-    // TODO copy all messages from member channels on DS to Electric Spongeaboob
-    let channels = {};
-    client.guilds.cache.get('527796496440098816').channels.cache.sort((c1, c2) => {
-        return c1.rawPosition - c2.rawPosition;
-    }).filter(channel => {
-        return channel.isText();
-    }).each(channel => {
-        channels[channel.id] = channel.name;
-    });
-    fs.writeFileSync('./output/channels.json', JSON.stringify(channels));
+    return;
+    client.channels.fetch('826180451374596129'/* channel id to send msgs to */).then(to => {
+        client.channels.fetch('649387666827247648'/* channel id to get msgs from */).then(from => {
+
+            function eachMsg(msg) {
+                return to.send(msg.content, msg.embeds.concat([...msg.attachments.values()]).concat(
+                    new Discord.MessageEmbed()
+                    .setTimestamp(msg.createdAt)
+                    .setDescription(`<@${msg.author.id}>`)
+                )).catch(e => {
+                    fs.appendFileSync('./output/missedMessages.json', `${msg.id},`);
+                });
+            }
+
+            function messageRecursive(last) {
+                from.messages.fetch({ limit: 1, after: last }, false).then(messages => {
+                    let msg = messages.first();
+                    if (msg) {
+                        eachMsg(msg).then(msg2 => {
+                            messageRecursive(msg.id);
+                        });
+                    } else {
+                        logger.log('info', `Finished copying messages from ${from.name} to ${to.name}!`);
+                    }
+                }).catch(console.error);
+            }
+
+            fs.writeFileSync('./output/missedMessages.json', '{"ids":[');
+            from.messages.fetch('651999281489903627' /* first message id */, false).then(msg => {
+                eachMsg(msg).then(() => messageRecursive(msg.id));
+            })
+            
+        }).catch(console.error);
+    }).catch(console.error);
 });
 
 client.on('debug', m => {
@@ -141,6 +164,7 @@ client.on('guildMemberUpdate', (oldMember, newMember) => {
 });
 
 client.on('message', msg => {
+    // return; // TODO remove after ripping channels
     let ping = Date.now();
 
     if (msg.author.bot) return;
