@@ -5,10 +5,16 @@ if (!fs.existsSync('output')) {
     fs.mkdirSync('output');
 }
 
+const https = require('https');
 const http = require('http');
 http.createServer((req, res) => {
 	res.end('A');
 }).listen(8080);
+
+const imagemin = require('imagemin');
+const imageminMozjpeg = require('imagemin-mozjpeg');
+const imageminPngquant = require('imagemin-pngquant');
+const imageminGifsicle = require('imagemin-gifsicle');
 
 const winston = require('winston');
 const logger = winston.createLogger({
@@ -20,6 +26,7 @@ const logger = winston.createLogger({
 });
 
 const Discord = require('discord.js');
+const { resolve } = require('path');
 const client = new Discord.Client();
 
 function isDev(msg) {
@@ -108,16 +115,59 @@ client.on('ready', () => {
     logger.log('info', `Logged in as ${client.user.tag}!`);
 
     // return;
-    client.channels.fetch('826180452112269385'/* channel id to send msgs to */).then(to => {
-        client.channels.fetch('541930164460978178'/* channel id to get msgs from */).then(from => {
+    let start = Date.now();
+    client.channels.fetch('826180452519510067'/* channel id to send msgs to */).then(to => {
+        client.channels.fetch('640323827502546976'/* channel id to get msgs from */).then(from => {
 
             function eachMsg(msg) {
-                return to.send(msg.content, msg.embeds.concat([...msg.attachments.values()]).concat(
-                    new Discord.MessageEmbed()
-                    .setTimestamp(msg.createdAt)
-                    .setDescription(`<@${msg.author.id}>`)
-                )).catch(e => {
-                    fs.appendFileSync('./output/missedMessages.json', `${msg.id},`);
+                let attachments = [...msg.attachments.values()];
+                let promises = [];
+                attachments.forEach((v, i, a) => {
+                    if (v.size >= 8000000) {
+                        promises.push(new Promise((resolve, reject) => {
+                            https.get(v.url, res => {
+                                let stream = res.pipe(fs.createWriteStream(`attachments/${v.id}_${v.name}`));
+                                stream.on('close', () => {
+                                    imagemin([`attachments/${v.id}_${v.name}`], {
+                                        destination: `compressed`,
+                                        plugins: [
+                                            imageminGifsicle({
+                                                optimizationLevel: 1,
+                                                colors: 64
+                                            }),
+                                            imageminMozjpeg({
+                                                quality: 75
+                                            }),
+                                            imageminPngquant({
+                                                speed: 4,
+                                                strip: true,
+                                                quality: [0.65, 0.85],
+                                                dithering: 0.85,
+                                                posterize: 2
+                                            })
+                                        ]
+                                    }).then(files => {
+                                        a[i] = new Discord.MessageAttachment(files[0].data, v.name);
+                                        logger.log('info', `Compressed ${v.name} from ${v.size} B`);
+                                        resolve();
+                                    }).catch(e => logger.log('error', 'Failed to compress image attachment'));
+                                });
+                            });
+                            setTimeout(() => reject(new Error('Took too long')), 30000);
+                        }));
+                    }
+                });
+                return new Promise((resolve, reject) => {
+                    Promise.allSettled(promises).finally(result => {
+                        to.send(msg.content, msg.embeds.concat(attachments).concat(
+                            new Discord.MessageEmbed()
+                            .setTimestamp(msg.createdAt)
+                            .setDescription(`<@${msg.author.id}>`)
+                        )).catch(e => {
+                            logger.log('error', e);
+                            fs.appendFileSync('output/missedMessages.json', `${msg.id},`);
+                        }).finally(() => resolve());
+                    });
                 });
             }
 
@@ -125,19 +175,23 @@ client.on('ready', () => {
                 from.messages.fetch({ limit: 1, after: last }, false).then(messages => {
                     let msg = messages.first();
                     if (msg) {
-                        eachMsg(msg).then(msg2 => {
-                            messageRecursive(msg.id);
-                        });
+                        eachMsg(msg).finally(() => messageRecursive(msg.id));
                     } else {
-                        logger.log('info', `Finished copying messages from ${from.name} to ${to.name}!`);
-                        fs.appendFileSync('./output/missedMessages.json', ']}');
+                        logger.log('info', `Finished copying messages from ${from.name} to ${to.name} in ${Date.now() - start}ms!`);
+                        fs.appendFileSync('output/missedMessages.json', ']}');
                     }
                 }).catch(console.error);
             }
 
-            fs.writeFileSync('./output/missedMessages.json', '{"ids":[');
-            from.messages.fetch('555757224647983107' /* first message id */, false).then(msg => {
-                eachMsg(msg).then(msg2 => messageRecursive(msg.id));
+            if (!fs.existsSync('attachments')) {
+                fs.mkdirSync('attachments');
+            }
+            if (!fs.existsSync('compressed')) {
+                fs.mkdirSync('compressed');
+            }
+            fs.writeFileSync('output/missedMessages.json', '{"ids":[');
+            from.messages.fetch('750159619284009022' /* first message id */, false).then(msg => {
+                eachMsg(msg).finally(() => messageRecursive(msg.id));
             }).catch(console.error);
             
         }).catch(console.error);

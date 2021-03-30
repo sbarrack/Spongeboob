@@ -116,3 +116,5 @@ dist
 config.json
 output
 emojis
+attachments
+compressed
