@@ -111,14 +111,14 @@ function dateToGoogle(date) {
 process.on('uncaughtException', e => logger.log('error', e));
 process.on('unhandledRejection', e => logger.log('error', e));
 
-const debug = false;
+const debug = true;
 client.on('ready', () => {
     logger.log('info', `Logged in as ${client.user.tag}!`);
 
     if (debug) return;
-    const fromID = '739666069995651153';
-    const toID = '826180452313464882';
-    const startMsgID = '749031116509282425';
+    const fromID = '690932493808828486';
+    const toID = '826180452704190464';
+    const startMsgID = '805100080335814676';
     let start = Date.now();
     client.channels.fetch(toID).then(to => {
         client.channels.fetch(fromID).then(from => {
@@ -257,7 +257,7 @@ client.on('guildMemberUpdate', (oldMember, newMember) => {
 });
 
 client.on('message', msg => {
-    if (debug) return;
+    // if (debug) return;
     let ping = Date.now();
 
     if (msg.author.bot) return;
@@ -406,6 +406,22 @@ Coming soon:tm:!` : '')
                     }).catch(e => logger.log('error', e));
                 }
             }).catch(e => logger.log('error', e));
+
+            break;
+        case 'ra':
+        case 'rollall':
+            if (!isMod(msg)) {
+                logger.log('info', `${msg.author.tag} (${msg.author.id}) attemted to execute ${cmd} without permission`);
+                failFast(msg, 'you lack sufficient privileges');
+                return;
+            }
+            // TODO fix later
+            let targetRole = msg.mentions.roles.first();
+            msg.guild.members.fetch().then(members => {
+                members.each(member => {
+                    member.roles.add(targetRole);
+                });
+            }).catch(console.error);
 
             break;
     }
