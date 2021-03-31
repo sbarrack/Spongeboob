@@ -111,13 +111,17 @@ function dateToGoogle(date) {
 process.on('uncaughtException', e => logger.log('error', e));
 process.on('unhandledRejection', e => logger.log('error', e));
 
+const debug = false;
 client.on('ready', () => {
     logger.log('info', `Logged in as ${client.user.tag}!`);
 
-    // return;
+    if (debug) return;
+    const fromID = '739666069995651153';
+    const toID = '826180452313464882';
+    const startMsgID = '749031116509282425';
     let start = Date.now();
-    client.channels.fetch('826180452519510067'/* channel id to send msgs to */).then(to => {
-        client.channels.fetch('640323827502546976'/* channel id to get msgs from */).then(from => {
+    client.channels.fetch(toID).then(to => {
+        client.channels.fetch(fromID).then(from => {
 
             function eachMsg(msg) {
                 let attachments = [...msg.attachments.values()];
@@ -126,31 +130,50 @@ client.on('ready', () => {
                     if (v.size >= 8000000) {
                         promises.push(new Promise((resolve, reject) => {
                             https.get(v.url, res => {
-                                let stream = res.pipe(fs.createWriteStream(`attachments/${v.id}_${v.name}`));
+                                let filename = `attachments/${v.id}_${v.name.toLowerCase()}`;
+                                let stream = res.pipe(fs.createWriteStream(filename));
                                 stream.on('close', () => {
-                                    imagemin([`attachments/${v.id}_${v.name}`], {
-                                        destination: `compressed`,
-                                        plugins: [
-                                            imageminGifsicle({
-                                                optimizationLevel: 1,
-                                                colors: 64
-                                            }),
-                                            imageminMozjpeg({
-                                                quality: 75
-                                            }),
-                                            imageminPngquant({
-                                                speed: 4,
-                                                strip: true,
-                                                quality: [0.65, 0.85],
-                                                dithering: 0.85,
-                                                posterize: 2
-                                            })
-                                        ]
-                                    }).then(files => {
-                                        a[i] = new Discord.MessageAttachment(files[0].data, v.name);
-                                        logger.log('info', `Compressed ${v.name} from ${v.size} B`);
+                                    if (v.name.match(/.(jpg|jpeg|png|gif)$/i)) {
+                                        imagemin([ filename ], {
+                                            destination: `compressed`,
+                                            plugins: [
+                                                imageminGifsicle({
+                                                    optimizationLevel: 1,
+                                                    colors: 64
+                                                }),
+                                                imageminMozjpeg({
+                                                    quality: 75
+                                                }),
+                                                imageminPngquant({
+                                                    speed: 4,
+                                                    strip: true,
+                                                    quality: [0.65, 0.85],
+                                                    dithering: 0.85,
+                                                    posterize: 2
+                                                })
+                                            ]
+                                        }).then(files => {
+                                            if (files[0].data.length > 8000000) {
+                                                logger.log('error', `Compressed ${v.name} from ${v.size} B`)
+                                            }
+                                            a[i] = new Discord.MessageAttachment(files[0].data, v.name);
+                                            logger.log('info', `Compressed ${v.name} from ${v.size} B to ${files[0].data.length} B`);
+                                            resolve();
+                                        }).catch(e => {
+                                            a[i] = new Discord.MessageEmbed()
+                                                .setTimestamp(msg.createdAt)
+                                                .setDescription(`<@${msg.author.id}>\nMissing file ${filename}`);
+                                            logger.log('warn', `Failed to compress image attachment ${v.name}`);
+                                            resolve();
+                                        });
+                                    } else {
+                                        // TODO also compress video (and audio)
+                                        a[i] = new Discord.MessageEmbed()
+                                            .setTimestamp(msg.createdAt)
+                                            .setDescription(`<@${msg.author.id}>\nMissing file ${filename}`);
+                                        logger.log('warn', `Saved file "${filename}" for message: ${msg.url}`);
                                         resolve();
-                                    }).catch(e => logger.log('error', 'Failed to compress image attachment'));
+                                    }
                                 });
                             });
                             setTimeout(() => reject(new Error('Took too long')), 30000);
@@ -158,15 +181,26 @@ client.on('ready', () => {
                     }
                 });
                 return new Promise((resolve, reject) => {
-                    Promise.allSettled(promises).finally(result => {
-                        to.send(msg.content, msg.embeds.concat(attachments).concat(
-                            new Discord.MessageEmbed()
-                            .setTimestamp(msg.createdAt)
-                            .setDescription(`<@${msg.author.id}>`)
-                        )).catch(e => {
+                    Promise.allSettled(promises).finally(results => {
+                        let stamp = new Discord.MessageEmbed()
+                        .setTimestamp(msg.createdAt)
+                        .setDescription(`<@${msg.author.id}>`);
+                        let promises2 = [];
+                        promises2.push(to.send(msg.content, msg.embeds.concat(stamp)).catch(e => {
                             logger.log('error', e);
                             fs.appendFileSync('output/missedMessages.json', `${msg.id},`);
-                        }).finally(() => resolve());
+                            reject();
+                        }));
+                        attachments.forEach((v, i, a) => {
+                            promises.push(
+                                to.send('', [stamp].concat(v)).catch(e => {
+                                    logger.log('error', e);
+                                    fs.appendFileSync('output/missedMessages.json', `${msg.id},`);
+                                    reject();
+                                })
+                            );
+                        });
+                        Promise.allSettled(promises2).finally(results2 => resolve());
                     });
                 });
             }
@@ -177,8 +211,9 @@ client.on('ready', () => {
                     if (msg) {
                         eachMsg(msg).finally(() => messageRecursive(msg.id));
                     } else {
-                        logger.log('info', `Finished copying messages from ${from.name} to ${to.name} in ${Date.now() - start}ms!`);
+                        logger.log('info', `Finished copying messages in ${Date.now() - start}ms!`);
                         fs.appendFileSync('output/missedMessages.json', ']}');
+                        process.exit();
                     }
                 }).catch(console.error);
             }
@@ -190,9 +225,12 @@ client.on('ready', () => {
                 fs.mkdirSync('compressed');
             }
             fs.writeFileSync('output/missedMessages.json', '{"ids":[');
-            from.messages.fetch('750159619284009022' /* first message id */, false).then(msg => {
-                eachMsg(msg).finally(() => messageRecursive(msg.id));
-            }).catch(console.error);
+            logger.log('info', `Copying messages from ${from.guild.name}:${from.name} to ${to.guild.name}:${to.name}...`)
+            setTimeout(() => {
+                from.messages.fetch(startMsgID, false).then(msg => {
+                    eachMsg(msg).finally(() => messageRecursive(msg.id));
+                }).catch(console.error);
+            }, 4000);
             
         }).catch(console.error);
     }).catch(console.error);
@@ -219,7 +257,7 @@ client.on('guildMemberUpdate', (oldMember, newMember) => {
 });
 
 client.on('message', msg => {
-    return; // TODO remove after ripping channels
+    if (debug) return;
     let ping = Date.now();
 
     if (msg.author.bot) return;
