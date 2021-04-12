@@ -1,5 +1,3 @@
-const debug = false;
-
 const fs = require('fs');
 const config = JSON.parse(fs.readFileSync('config.json'));
 
@@ -7,16 +5,16 @@ if (!fs.existsSync('output')) {
     fs.mkdirSync('output');
 }
 
-const https = require('https');
+// const https = require('https');
 const http = require('http');
 http.createServer((req, res) => {
     res.end('A');
 }).listen(8080);
 
-const imagemin = require('imagemin');
-const imageminMozjpeg = require('imagemin-mozjpeg');
-const imageminPngquant = require('imagemin-pngquant');
-const imageminGifsicle = require('imagemin-gifsicle');
+// const imagemin = require('imagemin');
+// const imageminMozjpeg = require('imagemin-mozjpeg');
+// const imageminPngquant = require('imagemin-pngquant');
+// const imageminGifsicle = require('imagemin-gifsicle');
 
 const winston = require('winston');
 const logger = winston.createLogger({
@@ -28,7 +26,7 @@ const logger = winston.createLogger({
 });
 
 const Discord = require('discord.js');
-const { resolve } = require('path');
+// const { resolve } = require('path');
 const client = new Discord.Client();
 
 function isDev(msg) {
@@ -192,7 +190,6 @@ client.on('ready', () => {
     logger.log('info', `Logged in as ${client.user.tag}!`);
     updateInvites();
 
-    if (!debug) return;
     // const fromID = '690932493808828486';
     // const toID = '826180452704190464';
     // const startMsgID = '805100080335814676';
@@ -343,7 +340,6 @@ client.on('inviteDelete', invite => {
 });
 
 client.on('message', msg => {
-    if (debug) return;
     let ping = Date.now();
 
     if (msg.author.bot) return;
