@@ -139,10 +139,22 @@ function updateInvites(invite, wasDeleted) {
                         }).catch(e => logger.log('error', `Failed to delete invite ${invite2.url} on guild ${guild.name}!`));
                     }
                 }
+                if (invite2.maxUses && !willDelete) {
+                    if (invite2.max-uses > 1) {
+                        willDelete = true;
+                        invite2.delete(
+                            `Auto-deleted because user <@${invite2.inviter.id}> created an invite with more than one uses.`
+                        ).then(invite3 => {
+                            logger.log('info', `Deleted invite ${invite2.url} on guild ${guild.name} by ${invite2.inviter.tag}.`);
+                            guild.channels.cache.get(config.logChannels[guild.id]).send(
+                                `Auto-deleted invite ${invite2.url} because user <@${invite2.inviter.id}> created an invite with more than one uses.`
+                            ).catch(e => logger.log('error', e));
+                        }).catch(e => logger.log('error', `Failed to delete invite ${invite2.url} on guild ${guild.name}!`));
+                    }
+                }
                 // // TODO
                 //   if target user is already on the server or is banned, delete()
                 //   if expiresAt - createdAt > 48 hours, delete()
-                //   if maxUses > 1, delete()
                 //   if uses > 0, delete()
                 //   log code, channel, inviter/client, target user, creation, expiration, maxage, uses, maxuses
             });
