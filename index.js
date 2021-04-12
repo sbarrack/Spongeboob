@@ -28,6 +28,7 @@ const logger = winston.createLogger({
 });
 
 const Discord = require('discord.js');
+const { resolve } = require('path');
 const client = new Discord.Client();
 
 function isDev(msg) {
