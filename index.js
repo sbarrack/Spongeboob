@@ -86,8 +86,8 @@ function updateRole(member, memberAfter) {
     member.guild.channels.cache.get(config.logChannels[member.guild.id]).send(roleList).catch(e => logger.log('error', e));
 }
 
-const inviteHours = 48;
-const inviteSeconds = inviteHours * 60 * 60;
+const inviteDays = 7;
+const inviteSeconds = inviteDays * 24 * 60 * 60;
 function updateInvites(invite, wasDeleted) {
     // NOTE not all invite properties will exist!
     if (invite) {
@@ -129,11 +129,11 @@ function updateInvites(invite, wasDeleted) {
                     if (invite2.maxAge < 1 || invite2.maxAge > inviteSeconds) {
                         willDelete = true;
                         invite2.delete(
-                            `Auto-deleted because user <@${invite2.inviter.id}> created an invite longer than ${inviteHours} hours.`
+                            `Auto-deleted because user <@${invite2.inviter.id}> created an invite longer than ${inviteDays} days.`
                         ).then(invite3 => {
                             logger.log('info', `Deleted invite ${invite2.url} on guild ${guild.name} by ${invite2.inviter.tag}.`);
                             guild.channels.cache.get(config.logChannels[guild.id]).send(
-                                `Auto-deleted invite ${invite2.url} because user <@${invite2.inviter.id}> created an invite longer than ${inviteHours} hours.`
+                                `Auto-deleted invite ${invite2.url} because user <@${invite2.inviter.id}> created an invite longer than ${inviteDays} days.`
                             ).catch(e => logger.log('error', e));
                         }).catch(e => logger.log('error', `Failed to delete invite ${invite2.url} on guild ${guild.name}!`));
                     }
