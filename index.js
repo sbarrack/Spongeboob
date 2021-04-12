@@ -140,7 +140,7 @@ function updateInvites(invite, wasDeleted) {
                     }
                 }
                 if (invite2.maxUses && !willDelete) {
-                    if (invite2.max-uses > 1) {
+                    if (invite2.maxUses > 1) {
                         willDelete = true;
                         invite2.delete(
                             `Auto-deleted because user <@${invite2.inviter.id}> created an invite with more than one uses.`
