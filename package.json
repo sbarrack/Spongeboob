@@ -8,7 +8,9 @@
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
-    "start": "node ."
+    "start": "node .",
+    "status": "heroku ps -a spell-bot",
+    "ssh": "heroku run -a spell-bot bash"
   },
   "dependencies": {
     "discord.js": "^12.2.0",
