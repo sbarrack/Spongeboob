@@ -1,2 +1,2 @@
-# Spongeboob
-Estuvo's Discord utility bot
+# Spell-bot
+The Don't Spell utility bot

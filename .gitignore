@@ -113,6 +113,8 @@ dist
 # Local History for Visual Studio Code
 .history/
 
+.env
+
 config.json
 output
 emojis

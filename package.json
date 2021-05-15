@@ -9,6 +9,7 @@
   "private": true,
   "dependencies": {
     "discord.js": "^12.2.0",
+    "dotenv": "^9.0.2",
     "winston": "^3.3.3"
   }
 }

@@ -1,5 +1,9 @@
+if (process.env.ENV !== 'prod') {
+    require('dotenv').config();
+}
+
 const fs = require('fs');
-const config = JSON.parse(fs.readFileSync('config.json'));
+let config = JSON.parse(fs.readFileSync('config.json'));
 
 if (!fs.existsSync('output')) {
     fs.mkdirSync('output');
@@ -543,4 +547,4 @@ Coming soon:tm:!` : '')
     }
 });
 
-client.login(config.token);
+client.login(process.env.TOKEN);
