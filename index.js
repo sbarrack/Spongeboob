@@ -28,11 +28,6 @@ http.createServer((req, res) => {
     res.end("A");
 }).listen(8080);
 
-// const imagemin = require('imagemin');
-// const imageminMozjpeg = require('imagemin-mozjpeg');
-// const imageminPngquant = require('imagemin-pngquant');
-// const imageminGifsicle = require('imagemin-gifsicle');
-
 const winston = require("winston");
 const logger = winston.createLogger({
     transports: [
@@ -48,7 +43,6 @@ const logger = winston.createLogger({
 });
 
 const Discord = require("discord.js");
-// const { resolve } = require('path');
 const client = new Discord.Client();
 
 function isDev(msg) {
@@ -60,9 +54,6 @@ function isSuper(msg) {
 
     return config.superusers.includes(msg.author.id);
 }
-const filepath = path.join(dir, `ds_${date}.csv`);
-
-var poll, time;
 
 function isAdmin(msg) {
     if (isSuper(msg)) return true;
@@ -119,9 +110,7 @@ function updateRole(member, memberAfter) {
 
 const inviteDays = 7;
 const inviteSeconds = inviteDays * 24 * 60 * 60;
-// let inviteUpdateQueue = 0;
 function updateInvites() {
-    // if (inviteUpdateQueue == 0) {
     client.guilds.cache.each((guild) => {
         guild
             .fetchInvites()
@@ -397,10 +386,6 @@ function updateInvites() {
                 )
             );
     });
-    // if (--inviteUpdateQueue > 0) {
-    //     inviteUpdateQueue
-    // }
-    // }
 }
 
 function failFast(msg, desc, delay = 15000) {
@@ -720,22 +705,6 @@ Coming soon:tm:!`
                 .catch((e) => logger.log("error", e));
 
             break;
-        // case 'ra':
-        // case 'rollall':
-        //     if (!isAdmin(msg)) {
-        //         logger.log('info', `${msg.author.tag} (${msg.author.id}) attemted to execute ${cmd} without permission`);
-        //         failFast(msg, 'you lack sufficient privileges');
-        //         return;
-        //     }
-        //     // TODO fix later
-        //     let targetRole = msg.mentions.roles.first();
-        //     msg.guild.members.fetch().then(members => {
-        //         members.each(member => {
-        //             member.roles.add(targetRole);
-        //         });
-        //     }).catch(console.error);
-
-        //     break;
     }
 });
 
