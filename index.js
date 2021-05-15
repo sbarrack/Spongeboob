@@ -60,6 +60,9 @@ function isSuper(msg) {
 
     return config.superusers.includes(msg.author.id);
 }
+const filepath = path.join(dir, `ds_${date}.csv`);
+
+var poll, time;
 
 function isAdmin(msg) {
     if (isSuper(msg)) return true;
