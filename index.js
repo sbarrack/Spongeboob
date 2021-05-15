@@ -15,6 +15,8 @@ if (fs.existsSync("config.json")) {
 if (config) {
     config = JSON.parse(config);
 }
+config = {};
+config.starter = "sb ";
 
 if (!fs.existsSync("output")) {
     fs.mkdirSync("output");
