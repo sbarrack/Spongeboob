@@ -7,6 +7,9 @@
   "author": "sbarrack <12619603+sbarrack@users.noreply.github.com>",
   "license": "UNLICENSED",
   "private": true,
+  "scripts": {
+    "start": "node ."
+  },
   "dependencies": {
     "discord.js": "^12.2.0",
     "dotenv": "^9.0.2",
