@@ -1,7 +1,7 @@
 {
-  "name": "spongeboob",
+  "name": "spell-bot",
   "version": "1.0.0",
-  "description": "Estuvo's Discord utility bot",
+  "description": "The Don't Spell utility bot",
   "main": "index.js",
   "repository": "git@github.com:sbarrack/Spongeboob.git",
   "author": "sbarrack <12619603+sbarrack@users.noreply.github.com>",
