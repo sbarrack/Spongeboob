@@ -7,7 +7,11 @@ if (!isProd()) {
 }
 
 const fs = require("fs");
-let config = fs.readFileSync("config.json");
+let config;
+
+if (fs.existsSync("config.json")) {
+    fs.readFileSync("config.json");
+}
 if (config) {
     config = JSON.parse(config);
 }
