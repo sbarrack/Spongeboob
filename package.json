@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "The Don't Spell utility bot",
   "main": "index.js",
-  "repository": "git@github.com:sbarrack/Spongeboob.git",
+  "repository": "git@github.com:sbarrack/spell-bot.git",
   "author": "sbarrack <12619603+sbarrack@users.noreply.github.com>",
   "license": "UNLICENSED",
   "private": true,
