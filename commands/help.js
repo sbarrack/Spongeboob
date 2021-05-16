@@ -29,7 +29,7 @@ const commands = [
                 }
                 if (isAllowed) {
                     out.push(
-                        `\`${starter}${cmd.name}|${cmd.short}${
+                        `\`${starter} ${cmd.name}|${cmd.short}${
                             cmd.args ? ' ' + cmd.args : ''
                         } - ${cmd.desc}\``
                     )
