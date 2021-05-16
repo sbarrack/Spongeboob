@@ -10,7 +10,8 @@
   "scripts": {
     "start": "node .",
     "status": "heroku ps -a spell-bot",
-    "ssh": "heroku run -a spell-bot bash"
+    "ssh": "heroku run -a spell-bot bash",
+    "logs": "heroku logs -a spell-bot"
   },
   "dependencies": {
     "discord.js": "^12.2.0",
