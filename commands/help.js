@@ -9,7 +9,7 @@ const commands = [
         args: '',
         perm: '',
         execute(msg, arg) {
-            let out = ['__**Help Menu**__']
+            let out = ['__**Help Menu**__```']
             commands.forEach((cmd) => {
                 let isAllowed = true
                 if (cmd.perm) {
@@ -29,13 +29,13 @@ const commands = [
                 }
                 if (isAllowed) {
                     out.push(
-                        `\`${starter} ${cmd.name}|${cmd.short}${
+                        `${starter} ${cmd.name}|${cmd.short}${
                             cmd.args ? ' ' + cmd.args : ''
-                        } - ${cmd.desc}\``
+                        } - ${cmd.desc}`
                     )
                 }
             })
-            out = out.join('\n')
+            out = out.join('\n') + '```'
             if (isMod(msg)) {
                 msg.author
                     .createDM()
