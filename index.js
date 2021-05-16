@@ -65,7 +65,7 @@ client.on('message', (msg) => {
     let cmdStarter = starter
     if (config[msg.guild.id].starter) cmdStarter = config[msg.guild.id].starter
     if (!cmd.startsWith(cmdStarter)) return
-    cmd = cmd.slice(starter.length).split(' ')
+    cmd = cmd.slice(starter.length + 1).split(' ')
     if (cmd.length < 1) return
     let command = commands.find(
         (command) => command.name === cmd[0] || command.short === cmd[0]
