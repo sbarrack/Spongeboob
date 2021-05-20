@@ -71,7 +71,8 @@ app.get('/auth', (req, res) => {
             .append('WWW-Authenticate', 'OAuth realm="dontspell.net", charset="UTF-8"')
             .send(errorPage('401 Unauthorized'))
 
-    let { oauthState, lobby } = req.signedCookies
+    let { oauthState } = req.signedCookies
+    let { lobby } = req.cookies
     if (!(oauthState && lobby)) return res.status(403).send(errorPage('403 Forbidden'))
     if (typeof oauthState !== 'string') return res.status(403).send(errorPage('403 Forbidden'))
     if (typeof state !== 'string') return res.status(403).send(errorPage('403 Forbidden'))
@@ -120,8 +121,7 @@ app.get('/join', (req, res) => {
             signed: true
         })
         .cookie('lobby', lobby.uuid, {
-            httpOnly: true,
-            signed: true
+            maxAge: 7200000
         })
         .redirect(
             307,
@@ -156,8 +156,11 @@ function enterLobby(res, lobby, token) {
             if (data.findIndex((guild) => guild.id === lobby.guild) == -1)
                 return res.status(403).send(errorPage('403 Forbidden'))
 
-            // TODO redirect to alternate game page instead (probably going to need to be an iframe)
-            return res.redirect(lobby.url)
+            return res
+                .cookie('game', lobby.url, {
+                    maxAge: 7200000
+                })
+                .sendFile('index.html', { root: '.' })
         })
         .catch((e) => {
             logger.error(e.stack)

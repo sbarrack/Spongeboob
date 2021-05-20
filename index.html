@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+        }
+
+        #skribbl {
+            border: none;
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+        let current = getCookie("lobby");
+        if (current) {
+            current = "/join?lobby=" + current;
+        } else {
+            current = "";
+        }
+        window.history.replaceState(null, "skribbl - Free Multiplayer Drawing & Guessing Game", window.location.origin + current);
+        let game = getCookie("game");
+        if (game) {
+            let iframe = document.createElement("IFRAME");
+            iframe.setAttribute("id", "skribbl");
+            iframe.setAttribute("src", decodeURIComponent(game));
+            iframe.setAttribute("title", "Skribbl");
+            document.body.prepend(iframe);
+        }
+
+        function getCookie(cname) {
+            var name = cname + "=";
+            var ca = document.cookie.split(";");
+            for (var i = 0; i < ca.length; i++) {
+                var c = ca[i];
+                while (c.charAt(0) == " ") {
+                    c = c.substring(1);
+                }
+                if (c.indexOf(name) == 0) {
+                    return c.substring(name.length, c.length);
+                }
+            }
+            return "";
+        }
+    </script>
+</body>
+
+</html>

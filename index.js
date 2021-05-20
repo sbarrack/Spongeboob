@@ -61,7 +61,7 @@ client.on('inviteDelete', (invite) => {
     // updateInvites()
 })
 
-const skribblLink = new RegExp('http(s)*://skribbl.io/\\?[a-z,A-Z,0-9]{12}', 'g')
+const skribblLink = new RegExp('http(s)?://skribbl.io/\\?[a-z,A-Z,0-9]{12}', 'g')
 client.on('message', (msg) => {
     if (msg.author.id !== process.env.DEV && process.env.ENV === 'dev') return
     if (msg.author.bot || msg.channel.type !== 'text' || msg.system) return
@@ -95,7 +95,7 @@ client.on('message', (msg) => {
             .then((msg2) => {
                 msg2.channel
                     .send(
-                        `@here ${lobbies.add(msg2.guild.id, link[0])}\n${link.input.replace(
+                        `${lobbies.add(msg2.guild.id, link[0])}\n${link.input.replace(
                             skribblLink,
                             ''
                         )}`
