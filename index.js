@@ -63,7 +63,7 @@ client.on('inviteDelete', (invite) => {
 
 const skribblLink = new RegExp('http(s)*://skribbl.io/\\?[a-z,A-Z,0-9]{12}', 'g')
 client.on('message', (msg) => {
-    if (msg.author.id !== process.env.DEV) return
+    if (msg.author.id !== process.env.DEV && process.env.ENV === 'dev') return
     if (msg.author.bot || msg.channel.type !== 'text' || msg.system) return
 
     let mentioned = msg.mentions.users.get(client.user.id)
