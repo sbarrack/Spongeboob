@@ -95,7 +95,7 @@ client.on('message', (msg) => {
             .then((msg2) => {
                 msg2.channel
                     .send(
-                        `${lobbies.add(msg2.guild.id, link[0])}\n${link.input.replace(
+                        `<@${msg.author.id}> ${lobbies.add(msg2.guild.id, link[0])}\n${link.input.replace(
                             skribblLink,
                             ''
                         )}`
