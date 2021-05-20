@@ -1,6 +1,7 @@
 const fs = require('fs')
 const http = require('http')
 const Discord = require('discord.js')
+const { lobbies } = require('./oauth.js')
 const { logger, starter, config, saveConfig } = require('./utils.js')
 
 // Get list of commands
@@ -12,6 +13,7 @@ for (let file of fs.readdirSync('commands').filter((file) => file.endsWith('.js'
 
 // Respond to all handshakes
 http.createServer((req, res) => {
+    console.log(JSON.stringify(req))
     res.end('A')
 }).listen(8080)
 
@@ -59,18 +61,49 @@ client.on('inviteDelete', (invite) => {
     // updateInvites()
 })
 
+const skribblLink = new RegExp('http(s)*://skribbl.io/\\?[a-z,A-Z,0-9]{12}', 'g')
 client.on('message', (msg) => {
+    if (msg.author.id !== process.env.DEV) return
     if (msg.author.bot || msg.channel.type !== 'text' || msg.system) return
+
+    let mentioned = msg.mentions.users.get(client.user.id)
+    if (mentioned) {
+        msg.reply(
+            'What the fuck did you just fucking say about me, you little bitch? I’ll have you know I graduated top of my class in the Navy Seals, and I’ve been involved in numerous secret raids on Al-Quaeda, and I have over 300 confirmed kills. I am trained in gorilla warfare and I’m the top sniper in the entire US armed forces. You are nothing to me but just another target. I will wipe you the fuck out with precision the likes of which has never been seen before on this Earth, mark my fucking words. You think you can get away with saying that shit to me over the Internet? Think again, fucker. As we speak I am contacting my secret network of spies across the USA and your IP is being traced right now so you better prepare for the storm, maggot. The storm that wipes out the pathetic little thing you call your life. You’re fucking dead, kid. I can be anywhere, anytime, and I can kill you in over seven hundred ways, and that’s just with my bare hands. Not only am I extensively trained in unarmed combat, but I have access to the entire arsenal of the United States Marine Corps and I will use it to its full extent to wipe your miserable ass off the face of the continent, you little shit. If only you could have known what unholy retribution your little “clever” comment was about to bring down upon you, maybe you would have held your fucking tongue. But you couldn’t, you didn’t, and now you’re paying the price, you goddamn idiot. I will shit fury all over you and you will drown in it. You’re fucking dead, kiddo.'
+        ).catch((e) => logger.error(e.stack))
+        return
+    }
+
     let cmd = msg.content
     let cmdStarter = starter
     if (config[msg.guild.id].starter) cmdStarter = config[msg.guild.id].starter
-    if (!cmd.startsWith(cmdStarter)) return
-    cmd = cmd.slice(starter.length + 1).split(' ')
-    if (cmd.length < 1) return
-    let command = commands.find(
-        (command) => command.name === cmd[0] || command.short === cmd[0]
-    )
-    if (command) command.execute(msg, cmd.slice(1))
+    if (cmd.startsWith(cmdStarter)) {
+        cmd = cmd.slice(starter.length).split(' ')
+        if (cmd.length < 1) return
+        let command = commands.find(
+            (command) => command.name === cmd[0] || command.short === cmd[0]
+        )
+        if (command) command.execute(msg, cmd.slice(1))
+        return
+    }
+
+    let link = skribblLink.exec(cmd)
+    if (link) {
+        msg.delete({
+            reason: `Hosted custom game link in ${msg.channel.name} by ${msg.author.tag}`
+        })
+            .then((msg2) => {
+                msg2.channel
+                    .send(
+                        `@here ${lobbies.add(msg2.guild.id, link[0])}\n${link.input.replace(
+                            skribblLink,
+                            ''
+                        )}`
+                    )
+                    .catch((e) => logger.error(e.stack))
+            })
+            .catch((e) => logger.error(e.stack))
+    }
 })
 
 client.login(process.env.TOKEN)

@@ -66,7 +66,7 @@ process.on('unhandledRejection', (e) => logger.error(e.stack))
 
 module.exports = {
     logger: logger,
-    starter: 'sb',
+    starter: 'sb ',
     config: config,
     saveConfig: saveConfig,
     isDev: isDev,

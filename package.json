@@ -12,11 +12,16 @@
     "status": "heroku ps -a spell-bot",
     "ssh": "heroku run -a spell-bot bash",
     "logs": "heroku logs -a spell-bot",
-    "stop": "heroku ps:scale -a spell-bot worker=0 && heroku ps:stop -a spell-bot spell-bot"
+    "disable": "heroku ps:scale -a spell-bot worker=0 && heroku ps:stop -a spell-bot spell-bot",
+    "enable": "heroku ps:scale -a spell-bot worker=1"
   },
   "dependencies": {
+    "cookie-parser": "^1.4.5",
     "discord.js": "^12.2.0",
     "dotenv": "^9.0.2",
+    "express": "^4.17.1",
+    "node-fetch": "^2.6.1",
+    "uuid": "^8.3.2",
     "winston": "^3.3.3"
   }
 }
