@@ -6,15 +6,22 @@ const uuid = require('uuid')
 const { Collection } = require('discord.js')
 const { logger } = require('./utils.js')
 
+const lobbyTimeout = 2 * 60 * 60 * 1e3
+
 class Lobby {
     #guild
     #url
     #uuid
+    #timeout
 
     constructor(guild, url) {
         this.#guild = guild
         this.#url = url
         this.#uuid = uuid.v4()
+        this.#timeout = setTimeout(() => {
+            lobbies.delete(this.#uuid)
+            this.#timeout = null
+        }, lobbyTimeout)
     }
 
     get guild() {
@@ -28,6 +35,16 @@ class Lobby {
     get uuid() {
         return this.#uuid
     }
+
+    join() {
+        if (this.#timeout) {
+            clearTimeout(this.#timeout)
+        }
+        this.#timeout = setTimeout(() => {
+            lobbies.delete(this.#uuid)
+            this.#timeout = null
+        }, lobbyTimeout)
+    }
 }
 
 class LobbyManager {
@@ -40,13 +57,20 @@ class LobbyManager {
     }
 
     add(guild, url) {
-        let lobby = new Lobby(guild, url)
-        this.lobbies.set(lobby.uuid, lobby)
+        let lobby = this.lobbies.find((lobby) => lobby.url === url)
+        if (!lobby) {
+            lobby = new Lobby(guild, url)
+            this.lobbies.set(lobby.uuid, lobby)
+        }
         return `${domain}/join?lobby=${lobby.uuid}`
     }
 
     get(uuid) {
         return this.lobbies.get(uuid)
+    }
+
+    delete(uuid) {
+        return this.lobbies.delete(uuid)
     }
 }
 
@@ -161,6 +185,7 @@ function enterLobby(res, lobby, token) {
             if (data.findIndex((guild) => guild.id === lobby.guild) == -1)
                 return res.status(403).send(errorPage('403 Forbidden'))
 
+            lobby.join()
             return res
                 .cookie('game', lobby.url, {
                     maxAge: cookieAge
