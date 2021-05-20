@@ -52,6 +52,7 @@ class LobbyManager {
 
 const app = express()
 const lobbies = new LobbyManager()
+const cookieAge = 5 * 60 * 1e3
 let domain = ''
 
 app.use(require('cookie-parser')(process.env.SECRET))
@@ -95,7 +96,7 @@ app.get('/auth', (req, res) => {
         })
     })
         .then((res) => res.json())
-        .then((data) => enterLobby(res, lobby, data))
+        .then((token) => enterLobby(res, lobby, token))
         .catch((e) => {
             logger.error(e.stack)
             return res.status(500).send(errorPage('500 Internal Server Error'))
@@ -106,22 +107,22 @@ app.get('/join', (req, res) => {
     let { lobby } = req.query
     if (!lobby) return res.status(403).send(errorPage('403 Forbidden'))
     if (!uuid.validate(lobby)) return res.status(400).send(errorPage('400 Bad Request'))
-    lobby = lobbies.get(lobby)
-    if (!lobby) return res.status(404).send(errorPage('404 Not Found'))
 
-    // // TODO Get token stored on client for this conditional
-    // if (token) {
-    //     return enterLobby(res, lobby, token)
-    // }
+    res.cookie('lobby', lobby, {
+        maxAge: cookieAge
+    })
+
+    const { token } = req.signedCookies
+    if (token) {
+        return enterLobby(res, lobby, JSON.parse(token))
+    }
 
     let state = uuid.v4()
     return res
         .cookie('oauthState', state, {
             httpOnly: true,
-            signed: true
-        })
-        .cookie('lobby', lobby.uuid, {
-            maxAge: 7200000
+            signed: true,
+            maxAge: cookieAge
         })
         .redirect(
             307,
@@ -145,6 +146,12 @@ function errorPage(h) {
 }
 
 function enterLobby(res, lobby, token) {
+    res.cookie('token', JSON.stringify(token), {
+        httpOnly: true,
+        signed: true,
+        maxAge: parseInt(token.expires_in, 10) * 1e3
+    })
+
     lobby = lobbies.get(lobby)
     if (!lobby) return res.status(404).send(errorPage('404 Not Found'))
 
@@ -158,7 +165,7 @@ function enterLobby(res, lobby, token) {
 
             return res
                 .cookie('game', lobby.url, {
-                    maxAge: 7200000
+                    maxAge: cookieAge
                 })
                 .sendFile('index.html', { root: '.' })
         })
