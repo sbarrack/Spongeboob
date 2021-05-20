@@ -57,10 +57,8 @@ let domain = ''
 
 app.use(require('cookie-parser')(process.env.SECRET))
 
-const server = app.listen(80, () => {
-    let { port, address } = server.address()
-    if (address === '::' || address === '0.0.0.0') address = 'localhost'
-    domain = `http://${address}`
+const server = app.listen(process.env.PORT, () => {
+    domain = `http://${process.env.DOMAIN}`
     logger.info('Server started on ' + domain)
 })
 
