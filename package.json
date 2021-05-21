@@ -12,8 +12,8 @@
     "status": "heroku ps -a spell-bot",
     "ssh": "heroku run -a spell-bot bash",
     "logs": "heroku logs -a spell-bot",
-    "disable": "heroku ps:scale -a spell-bot web=0 && heroku ps:stop -a spell-bot spell-bot",
-    "enable": "heroku ps:scale -a spell-bot web=1"
+    "disable": "heroku ps:scale -a spell-bot worker=0 && heroku ps:stop -a spell-bot spell-bot",
+    "enable": "heroku ps:scale -a spell-bot worker=1"
   },
   "dependencies": {
     "cookie-parser": "^1.4.5",
