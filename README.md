@@ -1,2 +1,2 @@
 # Spell-bot
-The Don't Spell utility bot
+A Discord utility bot
