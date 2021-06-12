@@ -21,7 +21,6 @@ http.createServer((req, res) => {
 const client = new Discord.Client()
 client.on('ready', () => {
     logger.log('info', `Logged in as ${client.user.tag}`)
-    // updateInvites()
 
     // Update config
     client.guilds.cache.each((guild) => {
@@ -42,23 +41,11 @@ client.on('error', (e) => {
     logger.error(e.stack)
 })
 
-client.on('guildMemberAdd', (member) => {
-    // updateInvites()
-})
 client.on('guildMemberRemove', (member) => {
     updateRole(member)
-    // updateInvites()
 })
 client.on('guildMemberUpdate', (oldMember, newMember) => {
     updateRole(oldMember, newMember)
-    // updateInvites()
-})
-
-client.on('inviteCreate', (invite) => {
-    // updateInvites()
-})
-client.on('inviteDelete', (invite) => {
-    // updateInvites()
 })
 
 const skribblLink = new RegExp('http(s)?://skribbl.io/\\?[a-z,A-Z,0-9]{12}', 'g')
@@ -80,21 +67,24 @@ client.on('message', (msg) => {
     }
 
     let link = skribblLink.exec(cmd)
-    if (link) {
+    if (link && msg.mentions.users.has(client.user.id)) {
         msg.delete({
             reason: `Hosted custom game link in ${msg.channel.name} by ${msg.author.tag}`
         })
             .then((msg2) => {
                 msg2.channel
                     .send(
-                        `<@${msg.author.id}> ${lobbies.add(msg2.guild.id, link[0])}\n${link.input.replace(
-                            skribblLink,
-                            ''
-                        )}`
+                        `<@${msg.author.id}> ${lobbies.add(
+                            msg2.guild.id,
+                            link[0]
+                        )}\n${link.input
+                            .replace(skribblLink, '')
+                            .replace(Discord.MessageMentions.USERS_PATTERN, '')}`
                     )
                     .catch((e) => logger.error(e.stack))
             })
             .catch((e) => logger.error(e.stack))
+        return
     }
 })
 
@@ -125,283 +115,3 @@ function updateRole(member, newMember) {
         .send(out.join('\n') + '```')
         .catch((e) => logger.error(e.stack))
 }
-
-// const inviteDays = 7
-// const inviteSeconds = inviteDays * 24 * 60 * 60
-// function updateInvites() {
-//     client.guilds.cache.each((guild) => {
-//         guild
-//             .fetchInvites()
-//             .then((invites) => {
-//                 invites.each((invite) => {
-//                     if (Number.isInteger(invite.maxAge)) {
-//                         if (
-//                             invite.maxAge < 1 ||
-//                             invite.maxAge > inviteSeconds
-//                         ) {
-//                             invite
-//                                 .delete(
-//                                     `Auto-deleted because user <@${invite.inviter.id}> created an invite longer than ${inviteDays} days.`
-//                                 )
-//                                 .then((invite2) => {
-//                                     if (!isProd()) {
-//                                         logger.log(
-//                                             'info',
-//                                             `Deleted invite ${invite.url} on guild ${guild.name} by ${invite.inviter.tag}.`
-//                                         )
-//                                     }
-//                                     guild.channels.cache
-//                                         .get(config.logChannels[guild.id])
-//                                         .send(
-//                                             `Auto-deleted invite ${invite.url} because user <@${invite.inviter.id}> created an invite longer than ${inviteDays} days.`
-//                                         )
-//                                         .catch((e) => logger.error(e.stack))
-//                                 })
-//                                 .catch((e) =>
-//                                     logger.log(
-//                                         'error',
-//                                         `Failed to delete invite ${invite.url} on guild ${guild.name}!`
-//                                     )
-//                                 )
-//                             return
-//                         }
-//                     }
-//                     if (invite.maxUses != 1) {
-//                         invite
-//                             .delete(
-//                                 `Auto-deleted because user <@${invite.inviter.id}> created an invite with more than one uses.`
-//                             )
-//                             .then((invite2) => {
-//                                 if (!isProd()) {
-//                                     logger.log(
-//                                         'info',
-//                                         `Deleted invite ${invite.url} on guild ${guild.name} by ${invite.inviter.tag}.`
-//                                     )
-//                                 }
-//                                 guild.channels.cache
-//                                     .get(config.logChannels[guild.id])
-//                                     .send(
-//                                         `Auto-deleted invite ${invite.url} because user <@${invite.inviter.id}> created an invite with more than one uses.`
-//                                     )
-//                                     .catch((e) => logger.error(e.stack))
-//                             })
-//                             .catch((e) =>
-//                                 logger.log(
-//                                     'error',
-//                                     `Failed to delete invite ${invite.url} on guild ${guild.name}!`
-//                                 )
-//                             )
-//                         return
-//                     }
-//                     if (Number.isInteger(invite.uses)) {
-//                         if (invite.uses > 0) {
-//                             invite
-//                                 .delete(
-//                                     `Auto-deleted because invite was used more than once.`
-//                                 )
-//                                 .then((invite2) => {
-//                                     if (!isProd()) {
-//                                         logger.log(
-//                                             'info',
-//                                             `Deleted invite ${invite.url} on guild ${guild.name} by ${invite.inviter.tag}.`
-//                                         )
-//                                     }
-//                                     guild.channels.cache
-//                                         .get(config.logChannels[guild.id])
-//                                         .send(
-//                                             `Auto-deleted invite ${invite.url} because user <@${invite.inviter.id}>'s invite was used more than once.`
-//                                         )
-//                                         .catch((e) => logger.error(e.stack))
-//                                 })
-//                                 .catch((e) =>
-//                                     logger.log(
-//                                         'error',
-//                                         `Failed to delete invite ${invite.url} on guild ${guild.name}!`
-//                                     )
-//                                 )
-//                             return
-//                         }
-//                     }
-//                     if (invite.inviter) {
-//                         guild.members
-//                             .fetch()
-//                             .then((members) => {
-//                                 if (members.has(invite.inviter.id)) {
-//                                     let member = members.get(invite.inviter.id)
-//                                     if (
-//                                         !member.hasPermission(
-//                                             'CREATE_INSTANT_INVITE'
-//                                         )
-//                                     ) {
-//                                         invite
-//                                             .delete(
-//                                                 `Auto-deleted because user <@${invite.inviter.id}> does not have permission to invite.`
-//                                             )
-//                                             .then((invite2) => {
-//                                                 if (!isProd()) {
-//                                                     logger.log(
-//                                                         'info',
-//                                                         `Deleted invite ${invite.url} on guild ${guild.name} by ${invite.inviter.tag}.`
-//                                                     )
-//                                                 }
-//                                                 guild.channels.cache
-//                                                     .get(
-//                                                         config.logChannels[
-//                                                             guild.id
-//                                                         ]
-//                                                     )
-//                                                     .send(
-//                                                         `Auto-deleted invite ${invite.url} because user <@${invite.inviter.id}> does not have permission to invite.`
-//                                                     )
-//                                                     .catch((e) =>
-//                                                         logger.error(e.stack)
-//                                                     )
-//                                             })
-//                                             .catch((e) =>
-//                                                 logger.log(
-//                                                     'error',
-//                                                     `Failed to delete invite ${invite.url} on guild ${guild.name}!`
-//                                                 )
-//                                             )
-//                                     }
-//                                 } else {
-//                                     invite
-//                                         .delete(
-//                                             `Auto-deleted because user <@${invite.inviter.id}> is no longer on ${guild.name}.`
-//                                         )
-//                                         .then((invite2) => {
-//                                             if (!isProd()) {
-//                                                 logger.log(
-//                                                     'info',
-//                                                     `Deleted invite ${invite.url} on guild ${guild.name} by ${invite.inviter.tag}.`
-//                                                 )
-//                                             }
-//                                             guild.channels.cache
-//                                                 .get(
-//                                                     config.logChannels[guild.id]
-//                                                 )
-//                                                 .send(
-//                                                     `Auto-deleted invite ${invite.url} because user <@${invite.inviter.id}> is no longer on ${guild.name}.`
-//                                                 )
-//                                                 .catch((e) =>
-//                                                     logger.error(e.stack)
-//                                                 )
-//                                         })
-//                                         .catch((e) =>
-//                                             logger.log(
-//                                                 'error',
-//                                                 `Failed to delete invite ${invite.url} on guild ${guild.name}!`
-//                                             )
-//                                         )
-//                                 }
-//                             })
-//                             .catch((e) =>
-//                                 logger.log(
-//                                     'error',
-//                                     `Failed to fetch members for guild ${guild.name}!`
-//                                 )
-//                             )
-//                     }
-//                     if (invite.targetUser) {
-//                         guild
-//                             .fetchBans()
-//                             .then((bans) => {
-//                                 if (bans.has(invite.targetUser.id)) {
-//                                     invite
-//                                         .delete(
-//                                             `Auto-deleted because user <@${invite.inviter.id}> invited <@${invite.targetUser.id}> who is banned.`
-//                                         )
-//                                         .then((invite2) => {
-//                                             if (!isProd()) {
-//                                                 logger.log(
-//                                                     'info',
-//                                                     `Deleted invite ${invite.url} on guild ${guild.name} by ${invite.inviter.tag}.`
-//                                                 )
-//                                             }
-//                                             guild.channels.cache
-//                                                 .get(
-//                                                     config.logChannels[guild.id]
-//                                                 )
-//                                                 .send(
-//                                                     `Auto-deleted invite ${invite.url} because user <@${invite.inviter.id}> invited <@${invite.targetUser.id}> who is banned.`
-//                                                 )
-//                                                 .catch((e) =>
-//                                                     logger.error(e.stack)
-//                                                 )
-//                                         })
-//                                         .catch((e) =>
-//                                             logger.log(
-//                                                 'error',
-//                                                 `Failed to delete invite ${invite.url} on guild ${guild.name}!`
-//                                             )
-//                                         )
-//                                 } else {
-//                                     guild.members
-//                                         .fetch()
-//                                         .then((members) => {
-//                                             if (
-//                                                 members.has(
-//                                                     invite.targetUser.id
-//                                                 )
-//                                             ) {
-//                                                 invite
-//                                                     .delete(
-//                                                         `Auto-deleted because user <@${invite.inviter.id}> invited <@${invite.targetUser.id}> who is already on ${guild.name}.`
-//                                                     )
-//                                                     .then((invite2) => {
-//                                                         if (!isProd()) {
-//                                                             logger.log(
-//                                                                 'info',
-//                                                                 `Deleted invite ${invite.url} on guild ${guild.name} by ${invite.inviter.tag}.`
-//                                                             )
-//                                                         }
-//                                                         guild.channels.cache
-//                                                             .get(
-//                                                                 config
-//                                                                     .logChannels[
-//                                                                     guild.id
-//                                                                 ]
-//                                                             )
-//                                                             .send(
-//                                                                 `Auto-deleted invite ${invite.url} because user <@${invite.inviter.id}> invited <@${invite.targetUser.id}> who is already on ${guild.name}.`
-//                                                             )
-//                                                             .catch((e) =>
-//                                                                 logger.log(
-//                                                                     'error',
-//                                                                     e
-//                                                                 )
-//                                                             )
-//                                                     })
-//                                                     .catch((e) =>
-//                                                         logger.log(
-//                                                             'error',
-//                                                             `Failed to delete invite ${invite.url} on guild ${guild.name}!`
-//                                                         )
-//                                                     )
-//                                             }
-//                                         })
-//                                         .catch((e) =>
-//                                             logger.log(
-//                                                 'error',
-//                                                 `Failed to fetch members for guild ${guild.name}!`
-//                                             )
-//                                         )
-//                                 }
-//                             })
-//                             .catch((e) =>
-//                                 logger.log(
-//                                     'error',
-//                                     `Failed to fetch bans for guild ${guild.name}!`
-//                                 )
-//                             )
-//                     }
-//                 })
-//             })
-//             .catch((e) =>
-//                 logger.log(
-//                     'error',
-//                     `Failed to fetch invites for guild ${guild.name}:\n${e}`
-//                 )
-//             )
-//     })
-// }
