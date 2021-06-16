@@ -72,7 +72,8 @@ module.exports = {
     isDev: isDev,
     isOwner: isOwner,
     isAdmin: isAdmin,
-    isMod: isMod
+    isMod: isMod,
+    dateToGoogle: dateToGoogle
 }
 
 function isDevelopment() {
@@ -103,4 +104,12 @@ function isAdmin(msg) {
 function isMod(msg) {
     if (!config[msg.guild.id].modRole) return undefined
     return msg.member.roles.cache.has(config[msg.guild.id].modRole) || isAdmin(msg)
+}
+
+function dateToGoogle(date) {
+    return `${[date.getUTCMonth() + 1, date.getUTCDate(), date.getUTCFullYear()].join('/')} ${[
+        date.getUTCHours(),
+        date.getUTCMinutes(),
+        date.getUTCSeconds()
+    ].join(':')}`
 }
