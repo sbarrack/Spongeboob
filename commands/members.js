@@ -6,19 +6,20 @@ let isRunning = false
 module.exports = {
     name: 'members',
     short: 'ms',
-    desc: 'Creates a list of all members of the guild',
+    desc: 'Lists all members of the guild by role',
     args: '',
     perm: 'admin',
     execute(msg, arg) {
-        if (!isRunning)
+        if (!isRunning) {
             msg.guild.members
                 .fetch()
                 .then((members) => {
+                    isRunning = true
                     const fileName = `./output/${this.name}.txt`
 
                     fs.writeFileSync(
                         fileName,
-                        'ID\tTag\tNickname\tHighest rank\tDate created\tDate joined\tAvatar'
+                        'ID\tTag\tNickname\tHighest role\tDate created\tDate joined\tAvatar'
                     )
 
                     members
@@ -39,19 +40,23 @@ module.exports = {
                             )
                         })
 
-                    msg.reply(`Completed ${this.name} in ${Date.now() - msg.createdAt}ms`, {
+                    msg.reply(`completed ${this.name} in ${Date.now() - msg.createdAt}ms`, {
                         files: [fileName]
                     })
                         .then(() => {
-                            msg.delete()
+                            msg.delete().catch((e) => logger.error(e.stack))
                             fs.unlinkSync()
                         })
                         .catch((e) => logger.error(e.stack))
+                        .finally(() => {
+                            isRunning = false
+                        })
                 })
                 .catch((e) => logger.error(e.stack))
-        else
+        } else {
             msg.reply('This command is already running. Please try again later.').catch((e) =>
                 logger.error(e.stack)
             )
+        }
     }
 }
