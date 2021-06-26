@@ -19,7 +19,7 @@ module.exports = {
             if (command) {
                 if (isAllowed(msg, command)) {
                     out.push(
-                        `${command.desc}\n\`${starter} ${command.name}|${command.short}${
+                        `${command.desc}\n\`${starter}${command.name}|${command.short}${
                             command.args ? ' ' + command.args : ''
                         }\``
                     )
@@ -33,7 +33,7 @@ module.exports = {
             out.push('__***Help Menu***__')
             commands.each((cmd) => {
                 if (isAllowed(msg, cmd)) {
-                    out.push(`\`${starter} ${cmd.name}\` - ${cmd.desc}`)
+                    out.push(`\`${starter}${cmd.name}\` - ${cmd.desc}`)
                 }
             })
         }

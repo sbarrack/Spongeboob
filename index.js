@@ -86,6 +86,10 @@ client.on('message', (msg) => {
             .catch((e) => logger.error(e.stack))
         return
     }
+
+    if (msg.channel.id === config[msg.guild.id].guess) {
+        // TODO add guessing game
+    }
 })
 
 client.login(process.env.TOKEN)
