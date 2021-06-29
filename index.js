@@ -41,11 +41,8 @@ client.on('error', (e) => {
     logger.error(e.stack)
 })
 
-client.on('guildMemberRemove', (member) => {
-    updateRole(member)
-})
 client.on('guildMemberUpdate', (oldMember, newMember) => {
-    updateRole(oldMember, newMember)
+    // TODO log rank role change to #general/promotion channel from config (set by ranks command)
 })
 
 const skribblLink = new RegExp('http(s)?://skribbl.io/\\?[a-z,A-Z,0-9]{12}', 'g')
@@ -93,29 +90,3 @@ client.on('message', (msg) => {
 })
 
 client.login(process.env.TOKEN)
-
-// All non load time code below
-
-function updateRole(member, newMember) {
-    if (!config[member.guild.id].log) return
-
-    let out = [`<@${member.id}>\`\`\``]
-    let cache = member.roles.cache
-    if (newMember) {
-        cache = member.roles.cache.difference(newMember.roles.cache)
-    }
-    if (!cache) return
-    if (cache.array().length < 1) return
-    cache.each((role) => {
-        if (role.name !== '@everyone') {
-            out.push(
-                `${role.name} | ${role.hexColor} | User count: ${role.members.array().length}`
-            )
-        }
-    })
-
-    member.guild.channels.cache
-        .get(config[member.guild.id].log)
-        .send(out.join('\n') + '```')
-        .catch((e) => logger.error(e.stack))
-}
